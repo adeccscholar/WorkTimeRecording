@@ -2,12 +2,17 @@
 
 ## Übersicht
 
-Dieses Open-Source-Projekt wurde im Rahmen des kostenlosen Schulungsangebots **adecc Scholar** entwickelt, das im Herbst 2020 während der Corona-Zeit mit kostenlosen Streams auf Twitch startete. Ziel ist es, anhand eines praxisnahen Beispiels — einer Zeiterfassung innerhalb eines Unternehmens — die Entwicklung moderner verteilter Systeme in **C++23** zu vermitteln.
+Dieses Open-Source-Projekt wird im Rahmen des kostenlosen Schulungsangebots **adecc Scholar** entwickelt, das im Herbst 2020 während der Corona-Zeit mit 
+kostenlosen Streams auf dem [adecc Scholar Twitch-Kanal](https://www.twitch.tv/volker_adecc) startete. 
+
+Ziel dieses Projektes ist es, anhand eines praxisnahen Beispiels — einer Zeiterfassung innerhalb eines Unternehmens — die Entwicklung moderner verteilter 
+Systeme in **C++23** zu vermitteln.
 
 ## Hauptziele
 
 - Vermittlung moderner C++-Techniken (einschließlich **C++23**) und Frameworks
 - Design und Implementierung eines verteilten Systems über verschiedene Rechnerklassen (Server, Desktop, Raspberry Pi, mobile Geräte)
+- Zugriff auf Datenbanken mit SQL
 - Integration von Sensor- und Gerätesteuerung (GPIO, I2C, SPI)
 - Diskussion von Projektsteuerung, Datenbankentwurf und Normalisierung
 - Demonstration plattformübergreifender Entwicklungen (Windows Server, Ubuntu Server, Windows/Linux Desktops, Embedded)
@@ -18,6 +23,7 @@ Dieses Open-Source-Projekt wurde im Rahmen des kostenlosen Schulungsangebots **a
    - Betriebssystem: **Ubuntu Linux**
    - CORBA/TAO als Middleware für verteilte Objekte
    - ODBC-Zugriff auf MS SQL Server
+   - zentrale Implementierung der Business Logik
 
 2. **Datenbank-Server**
    - Betriebssystem: **Windows Server**
@@ -26,9 +32,11 @@ Dieses Open-Source-Projekt wurde im Rahmen des kostenlosen Schulungsangebots **a
 
 3. **Arbeitsplatz-Clients**
    - Windows- und Linux-Desktops
+   - CORBA/TAO als Middleware 
    - Qt6-basierte GUI für Zeiterfassung und Berichtswesen
 
 4. **Embedded Clients (Raspberry Pi)**
+   - CORBA/TAO (Client und Server)
    - Zugriff auf GPIO-Pins für diskrete Signale
    - Nutzung von I2C/SPI für Sensoren, Anzeigen und RFID-Lesegeräte
    - Eigenständige Rollen als Client und (lokaler) Server
@@ -41,7 +49,12 @@ Dieses Open-Source-Projekt wurde im Rahmen des kostenlosen Schulungsangebots **a
 ## Verwendete Technologien und Bibliotheken
 
 - **C++23**: Modernste Sprachfunktionen für Effizienz und Plattformunabhängigkeit
-- **Visual Studio Community Edition**: Entwicklungsumgebung für Streams und Debugging
+- **Visual Studio C++**: Entwicklungsumgebung für Streams und Debugging
+  - VS C++ ist modern, es bietet die Möglichkeit zum Cross- Compiling 
+  - steht in der Community Version auch kostenlos zur Verfügung 
+- **GCC14** über Crosscompiling, auf Linux Plattformen, inklusive Raspberry PI
+- **Cmake** Buildverarbeitung
+  - Einbindung eigener Routinen, inklusive CORBA Workflow  
 - **Boost**
   - **Boost.SML** für finte Zustandsautomaten 
   - **Boost.JSON** für JSON-Verarbeitung (in späterer Erweiterung)
@@ -51,14 +64,19 @@ Dieses Open-Source-Projekt wurde im Rahmen des kostenlosen Schulungsangebots **a
   - CORBA Naming Services
   - CORBA Event Service, später auch TAO Events zur direkten Kommunikation
 - **Qt 6**: Datenbankzugriff (Qt SQL) und GUI-Entwicklung
+  - QDatabase und QWidgets
+  - kostenlose Version bei Open- Source Projekten, Möglichkeiten zum Download und eigenständigen Übersetzen  
 - **Embarcadero C++ Builder**
   - Einbindung älterer Werkzeuge (VCL, FMX)
   - Brücke zwischen Legacy-Code und modernen Systemen
 - **MS SQL Server**: Relationale Datenbank
+  - kostenlose Express Version oder Develepment Edition für Entwickler 
 
-## Besonderer Abschnitt: Embarcadero C++ Builder
+### Embarcadero C++ Builder
 
-Durch die Unterstützung von **Embarcadero C++ Builder** (VCL und FMX) zeigt das Projekt, wie sich auch ältere oder nicht zeitgemäße Werkzeuge in eine moderne Systemarchitektur integrieren lassen. Damit eröffnen sich Möglichkeiten, bereits existierende Legacy-Applikationen anzubinden und Schritt für Schritt zu migrieren.
+Durch die Unterstützung von **Embarcadero C++ Builder** (VCL und FMX) zeigt das Projekt, wie sich auch ältere oder nicht zeitgemäße Werkzeuge 
+in eine moderne Systemarchitektur integrieren lassen. Damit eröffnen sich Möglichkeiten, bereits existierende Legacy-Applikationen anzubinden 
+und Schritt für Schritt zu migrieren.
 
 ## Erste Schritte
 
