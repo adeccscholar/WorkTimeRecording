@@ -1,102 +1,180 @@
-// Organization.idl
+// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-/*
-  Copyright (c) 2025 adecc Systemhaus GmbH
+/**
+  \file 
+  \brief IDL definition of the Organization module for CORBA-based employee services.
  
-  This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU General Public License, version 3,
-  as published by the Free Software Foundation.
+  \details Defines interfaces and data types for working with employees, including
+           employee attributes, personal information, and service operations.
  
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU General Public License for more details.
+  \copyright Copyright © 2025 adecc Systemhaus GmbH  
+             This program is free software: you can redistribute it and/or modify it  
+             under the terms of the GNU General Public License, version 3,
+             as published by the Free Software Foundation.
  
-  You should have received a copy of the GNU General Public License
-  along with this program. If not, see <https://www.gnu.org/licenses/>.
+             This program is distributed in the hope that it will be useful,
+             but WITHOUT ANY WARRANTY; without even the implied warranty of
+             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+             See the GNU General Public License for more details.
+			
+             You should have received a copy of the GNU General Public License
+             along with this program. If not, see <https://www.gnu.org/licenses/>.
  
-  Part of the adecc Scholar project – Free educational materials for modern C++.
+  \note This Software is part of the adecc Scholar project – Free educational materials for modern C++.
  */
 
+/// Corba namespace / module for the Organization / Company with IDL defined types and interfaces.
 module Organization {
 
    // --------------------
    //    Additional Types
    // --------------------
+   /**
+     \brief Enumeration for representing gender.
+   */
    enum EGender {
-      MALE,
-      FEMALE,
-      OTHER
+      MALE,   ///< Male gender
+      FEMALE, ///< Female gender
+      OTHER   ///< Other / unspecified gender
       };
 
+
+   /**
+     \brief Represents a point in time as Unix timestamp in milliseconds.
+   */
    struct TimePoint {
-      long long milliseconds_since_epoch;  // Unix timestamp as milliseconds
+      long long milliseconds_since_epoch;  ///< Unix timestamp, milliseconds since the Unix epoch (1970-01-01T00:00:00Z).
       };
 	   
+	   
+    /**
+      \brief Represents a calendar date using year, month, and day.
+    */	   
    struct YearMonthDay {
-      long year;
-      short month;
-      short day;
+      long year;   ///< Full year, e.g., 2025
+      short month; ///< Month [1–12]
+      short day;   ///< Day [1–31]
       };
 
-    // --------------------------
+    // ----------------------------------------------------------------------------------------------
     //  user defined Exception 
-    // --------------------------
+    // ----------------------------------------------------------------------------------------------
+	
+	/**
+      \brief Exception thrown when an employee with a specific ID is not found.
+    */
     exception EmployeeNotFound {
-        long requestedId;      // ID, die nicht gefunden wurde
-		TimePoint requestedAt; // Timepoint as the error occured 
+        long requestedId;      ///< ID that was not found
+		TimePoint requestedAt; ///< Timestamp when the error occurred
        };
 
 
-    // ---------------------------------------
-    //  struct with values for direct read
-    // ---------------------------------------
-    struct EmployeeData {
-        long   personId;
-        string firstName;
-        string name;
-        EGender gender;
+    /**
+      \brief Full employee record structure for direct access.
+	  \details This structure exists for the stub and will transfered when used as return type. This is like a stateless use of Corba.
+	  \details Person and Employee Data are combined for an easier use.
+    */
+	struct EmployeeData {
+        long   personId;            ///< Unique person ID
+        string firstName;           ///< First name of the person
+        string name;                ///< Last name (surname) of the person
+        EGender gender;             ///< Gender of the person
 
-        double salary;
-        YearMonthDay startDate;
-        boolean isActive;
+        double salary;              ///< Current salary [should be greater as 0.0 when Employee currently active]
+        YearMonthDay startDate;     ///< Start date of employment
+        boolean isActive;           ///< Whether the employee is currently active
 	   }; 
 
-    // erst einmal ohne Vererbung
-    interface Employee {
-	    // Read-only attributes for simplicity in this example
-        readonly attribute long   personId;
-        readonly attribute string firstName;
-        readonly attribute string name;
-        readonly attribute EGender gender;
+   /**
+     \brief CORBA interface representing a single employee.
+	  \details Read-only attributes for simplicity in this example 
+	  \note In the first version without an inheritance between Person and Employee.
+   */
+	interface Employee {
+	     
+	     /** 
+          \name Attributes and functions which part of person representation
+		    \{
+	     */
+        readonly attribute long   personId;          ///< Unique person ID
+        readonly attribute string firstName;         ///< First name of the person
+        readonly attribute string name;              ///< Last name (surname) of the person
+        readonly attribute EGender gender;           ///< Gender of the employee
 
+        /**
+         \brief Returns the full name (first + last name) of the person.
+         \return Concatenated name corba string.
+        */
         string getFullName();
 		
-        readonly attribute double salary;
-        readonly attribute YearMonthDay startDate;
-        readonly attribute boolean isActive;
+		  /// \}
+
+	     /** 
+          \name Attributes and functions which part of employee representation
+		    \{
+		  */		
+        readonly attribute double salary;            ///< Current salary of employee [should be greater as 0.0 when Employee currently active]
+        readonly attribute YearMonthDay startDate;   ///< Date the employee started
+        readonly attribute boolean isActive;         ///< Whether the employee is currently active
 		
+		/// \}
+		
+	    /**
+         \brief Destroys this object on the server side.
+        */	
 		void destroy();
     };
 
-    // ---------------------------------
-    //    Sequence Type for Employees
-    // ---------------------------------
-    typedef sequence<Employee> EmployeeSeq;
+    /**
+      \brief A sequence (list) of Employee objects.
+    */   
+	typedef sequence<Employee> EmployeeSeq;
 
     // -------------------------------------------
     // Main Service Interface for the Company
     // -------------------------------------------
     interface Company {
-	    readonly attribute string nameCompany;
-	    TimePoint                 getTimeStamp();
-        EmployeeSeq               getEmployees();
+	    readonly attribute string nameCompany;      ///< Name of the company
+		
+		/**
+          \brief Returns a timestamp of the current system time.
+          \return A TimePoint representing the current time in milliseconds since epoch.
+        */
+	    TimePoint                 getTimeStamp();   
+        
+	    /**
+          \brief Returns a list of all employees.
+          \return A sequence of all employees currently registered in the system.
+        */	
+		EmployeeSeq               getEmployees();
+		
+	    /**
+          \brief Returns a list of only active employees.
+          \return A sequence of employees whose isActive flag is true.
+        */	
 		EmployeeSeq               getActiveEmployees();
-        Employee                  getEmployee(in long personId) raises (EmployeeNotFound); // Function may raise this Exception
+        
+        /**
+         \brief Returns a specific employee object.
+         \param personId ID of the employee to retrieve.
+         \return A reference to the requested Employee object.
+         \throws EmployeeNotFound if no employee with the given ID exists.
+        */		
+		Employee                  getEmployee(in long personId) raises (EmployeeNotFound); 
 		
-		double                    getSumSalary();
+        /**
+         \brief Computes the total salary sum of all employees.
+         \return The total salary value (sum of all individual salaries).
+        */
+ 		double                    getSumSalary();
 		
-		// method for direct transfer
-		EmployeeData              getEmployeeData(in long personId) raises (EmployeeNotFound); // Function may raise this Exception
+       /**
+          \brief Returns a snapshot of a specific employee’s data.
+          \param personId ID of the employee.
+          \return A value-based structure (EmployeeData) containing the employee's full data.
+          \throws EmployeeNotFound if the ID is not found.
+        */
+		EmployeeData              getEmployeeData(in long personId) raises (EmployeeNotFound);
     };
 };

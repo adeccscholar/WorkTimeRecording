@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+ï»¿// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /**
@@ -27,7 +27,7 @@
  
   \author Volker Hillmann (adecc Systemhaus GmbH)
  
-  \copyright Copyright © adecc Systemhaus GmbH 2021–2025
+  \copyright Copyright Â© adecc Systemhaus GmbH 2021â€“2025
  
   \license This project is mostly licensed under the GNU General Public License v3.0.
            For more information, see the LICENSE file.
@@ -157,6 +157,80 @@ inline std::chrono::system_clock::time_point convertTo(Organization::TimePoint c
    }
 
 /**
+   \brief Converts a raw CORBA string (char*) to a std::string and frees the allocated memory.
+ 
+   \details This function takes a raw `char*` string returned by a CORBA operation, converts it into a `std::string`,
+            and frees the memory that was allocated by the CORBA ORB using `CORBA::string_free`.
+            It ensures proper memory management by deallocating the memory after copying the string's contents to 
+            the `std::string`.
+ 
+   \details This method is only required on the client side if you want to use a `std::string` instead of 
+            a `CORBA::String_var`. This is worthwhile if you want to continue using it in the further course.
+
+   \param s A raw `char*` string returned by a CORBA method. If `s` is `nullptr`, an empty `std::string` is returned.
+   \return A `std::string` containing the same contents as the provided `char*`, or an empty string if `s` is `nullptr`.
+ 
+   \warning The provided `char*` pointer will be freed using `CORBA::string_free`. This function assumes ownership
+            of the memory and should only be used with strings allocated by CORBA operations.
+ */
+inline std::string toString(char* s) {
+   std::string result = s ? std::string{ s } : std::string{};
+   CORBA::string_free(s);  // important for CORBA::String type return values, the memory would allocated from orb!
+   return result;
+}
+
+/**
+  \brief Converts a CORBA::COMM_FAILURE exception to a detailed human-readable string.
+ 
+  \details This utility function serializes a `CORBA::COMM_FAILURE` exception and appends
+           diagnostic suggestions to help users understand and potentially resolve the communication issue.
+ 
+  \param ex A constant reference to the `CORBA::COMM_FAILURE` exception object.
+ 
+  \return A `std::string` containing the formatted exception message, along with hints for troubleshooting.
+ 
+  \pre The `CORBA::COMM_FAILURE` type must support insertion into an `std::ostream` (`operator<<`).
+  \post The returned string includes the exception details and suggestions such as checking
+        server and NameService availability.
+ 
+  \note Useful for log output or displaying user-facing diagnostics when communication with the CORBA server fails.
+ 
+  \see CORBA::COMM_FAILURE
+ */
+inline std::string toString(CORBA::COMM_FAILURE const& ex) {
+   std::ostringstream os;
+   os << "CORBA Communication Failure: " << ex << '\n'
+      << "Is the server running and reachable?\n"
+      << "Is the NameService running and reachable via ORBInitRef?";
+   return os.str();
+}
+
+/**
+  \brief Converts a CORBA::TRANSIENT exception to a detailed human-readable string.
+ 
+  \details This utility function serializes a `CORBA::TRANSIENT` exception and adds explanatory
+           notes to help identify transient issues such as server startup/shutdown delays.
+ 
+  \param ex A constant reference to the `CORBA::TRANSIENT` exception object.
+ 
+  \return A `std::string` containing the formatted exception message, including context-specific advice.
+ 
+  \pre The `CORBA::TRANSIENT` type must support insertion into an `std::ostream` (`operator<<`).
+  \post The returned string explains the transient nature of the exception and recommends retrying the operation.
+ 
+  \note This function is intended for improving error reporting and debugging in distributed CORBA environments.
+ 
+  \see CORBA::TRANSIENT
+ */
+inline std::string toString(CORBA::TRANSIENT const& ex) {
+   std::ostringstream os;
+   os << "CORBA Transient Exception: " << ex << '\n'
+      << "The server might be starting up, shutting down, or busy.\n"
+      << "Try again later.";
+   return os.str();
+   }
+
+/**
   \brief Converts a CORBA::Exception to a human-readable string.
  
   \details This utility function serializes a CORBA exception into a string using an output string stream.
@@ -169,7 +243,7 @@ inline std::chrono::system_clock::time_point convertTo(Organization::TimePoint c
   \pre The `CORBA::Exception` type must support insertion into an `std::ostream` (i.e., `operator<<` must be overloaded).
   \post The returned string will contain the serialized content of the exception, suitable for logs or error messages.
  
-  \note This function performs no formatting or parsing — it directly relies on the `operator<<` overload for `CORBA::Exception`.
+  \note This function performs no formatting or parsing â€” it directly relies on the `operator<<` overload for `CORBA::Exception`.
  
   \see CORBA::Exception
  */
@@ -178,6 +252,7 @@ inline std::string toString(CORBA::Exception const& ex) {
    os << ex;
    return os.str();
    }
+
 
 /**
   \brief Handles incoming POSIX signals and triggers a graceful shutdown.
@@ -232,13 +307,13 @@ int main(int argc, char *argv[]) {
       poa_manager->activate();
       std::println("[Application TT {}] RootPOA obtained and POAManager is activated.", getTimeStamp());
 
-      // 3. Policies für die beiden POAs erstellen
-      // Policy für den persistenten PA (für Company /Organization)
+      // 3. Policies fÃ¼r die beiden POAs erstellen
+      // Policy fÃ¼r den persistenten PA (fÃ¼r Company /Organization)
       CORBA::PolicyList comp_pol;
       comp_pol.length(1);
       comp_pol[0] = root_poa->create_lifespan_policy(PortableServer::PERSISTENT);
 
-      // Policy für den transienten POA (für Employee)
+      // Policy fÃ¼r den transienten POA (fÃ¼r Employee)
       CORBA::PolicyList empl_pol;
       empl_pol.length(2);
       empl_pol[0] = root_poa->create_lifespan_policy(PortableServer::TRANSIENT);
