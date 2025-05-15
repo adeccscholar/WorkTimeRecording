@@ -50,6 +50,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <string>
 #include <chrono>
 #include <thread>
 #include <atomic>
@@ -61,6 +62,8 @@
 #ifdef _WIN32
    #include <Windows.h>
 #endif
+
+using namespace std::string_literals;
 
 /**
   \brief Indicates whether a shutdown has been requested.
@@ -180,6 +183,26 @@ inline std::string toString(char* s) {
 }
 
 /**
+   \brief Converts a `CORBA::String_var` to a `std::string` without taking ownership.
+
+   \details This function safely converts a `CORBA::String_var`, which manages its own memory,
+            into a standard C++ `std::string`. It uses the `in()` method to obtain a
+            `const char*` representation without altering or freeing the underlying CORBA-managed memory.
+
+   \details Unlike the overload that takes a raw `char*`, this variant does not free any memory,
+            as `CORBA::String_var` handles its own resource management through RAII.
+
+   \param s A constant reference to a `CORBA::String_var` returned by a CORBA operation.
+   \return A `std::string` containing the same contents as the CORBA string.
+
+   \note This method is useful when working with CORBA strings in modern C++ codebases and avoids manual memory handling.
+ */
+inline std::string toString(CORBA::String_var const& s) {
+   return std::string{ s.in() };  // safe: in() returns const char*, ownership retained
+   }
+
+
+/**
   \brief Converts a CORBA::COMM_FAILURE exception to a detailed human-readable string.
  
   \details This utility function serializes a `CORBA::COMM_FAILURE` exception and appends
@@ -249,7 +272,7 @@ inline std::string toString(CORBA::TRANSIENT const& ex) {
  */
 inline std::string toString(CORBA::Exception const& ex) {
    std::ostringstream os;
-   os << ex;
+   os << "CORBA Exception: " << ex;
    return os.str();
    }
 
@@ -287,55 +310,68 @@ int main(int argc, char *argv[]) {
    signal(SIGINT, signal_handler);
    signal(SIGTERM, signal_handler);
 
+   const std::string strAppl = "Time Tracking App Server"s;
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);
 #endif
 
-   // 1. Corba initializieren, Achtung, Parameter werden azzimiliert
-   std::println("[Application TT {}] Server starting ...", getTimeStamp());
+   // ----------------------------------------------------------------------------------------------------------
+   // 1. Initialize CORBA – Note: The parameters will be assimilated (ownership is transferred).
+   // ----------------------------------------------------------------------------------------------------------
+   std::println("[{} {}] Server starting ...", strAppl, ::getTimeStamp());
    CORBA::ORB_var orb_global = CORBA::ORB_init(argc, argv);
    try {
       if (CORBA::is_nil(orb_global.in())) throw std::runtime_error("Failed to initialized the global ORB Object.");
-      std::println("[Application TT {}] Corba is intialized.", getTimeStamp());
+      std::println("[{} {}] Corba is intialized.", strAppl, ::getTimeStamp());
 
-      // 2. Referenz zum RootPOA (Portable Object Adapter)
+      // -------------------------------------------------------------------------------------------------------
+      // 2. Reference to the Root POA (Portable Object Adapter)
+      // -------------------------------------------------------------------------------------------------------
+      
       CORBA::Object_var poa_object = orb_global->resolve_initial_references("RootPOA");
       PortableServer::POA_var root_poa = PortableServer::POA::_narrow(poa_object.in());
       if (CORBA::is_nil(root_poa.in())) throw std::runtime_error("Failed to narrow the POA");
 
       PortableServer::POAManager_var poa_manager = root_poa->the_POAManager();
       poa_manager->activate();
-      std::println("[Application TT {}] RootPOA obtained and POAManager is activated.", getTimeStamp());
+      std::println("[{} {}] RootPOA obtained and POAManager is activated.", strAppl, ::getTimeStamp());
 
-      // 3. Policies für die beiden POAs erstellen
-      // Policy für den persistenten PA (für Company /Organization)
+      // -------------------------------------------------------------------------------------------------------
+      // 3. Create policies for both POAs (persistent, transient)
+      // -------------------------------------------------------------------------------------------------------
+      
+      // Policy for the persistent POA (for Company / Organization)
       CORBA::PolicyList comp_pol;
       comp_pol.length(1);
       comp_pol[0] = root_poa->create_lifespan_policy(PortableServer::PERSISTENT);
 
-      // Policy für den transienten POA (für Employee)
+      // Policy for the transient POA (for Employee)
       CORBA::PolicyList empl_pol;
       empl_pol.length(2);
       empl_pol[0] = root_poa->create_lifespan_policy(PortableServer::TRANSIENT);
       empl_pol[1] = root_poa->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
 
-      // 4. POAs als "Kind" des RootPOA erstellen
+      // -------------------------------------------------------------------------------------------------------
+      // 4. Create both POAs as children of the Root POA
+      // -------------------------------------------------------------------------------------------------------
       PortableServer::POA_var company_poa  = root_poa->create_POA("CompanyPOA", poa_manager.in(), comp_pol);
       PortableServer::POA_var employee_poa = root_poa->create_POA("EmployeePOA", poa_manager.in(), empl_pol);
 
       for (uint32_t i = 0; i < 1; ++i) comp_pol[i]->destroy();
       for (uint32_t i = 0; i < 2; ++i) empl_pol[i]->destroy();
 
-      std::println("[Application TT {}] Persistent CompanyPOA and transient EmployeePOA created.", getTimeStamp());
+      std::println("[{} {}] Persistent CompanyPOA and transient EmployeePOA created.", strAppl, ::getTimeStamp());
 
-      // 5. Servant erstellen
+      // -------------------------------------------------------------------------------------------------------
+      // 5. Create the Company servant object
+      // -------------------------------------------------------------------------------------------------------
 
       }
    catch(CORBA::Exception const& ex) {
-      std::println(std::cerr, "[Application TT {}] CORBA Exception caught: {}", getTimeStamp(), toString(ex));
+      std::println(std::cerr, "[{} {}] CORBA Exception caught: {}", strAppl, ::getTimeStamp(), toString(ex));
       }
    catch(std::exception const& ex) {
-      std::println(std::cerr, "[Application TT {}] std::exception caught: {}", getTimeStamp(), ex.what());
+      std::println(std::cerr, "[{} {}] std::exception caught: {}", strAppl, ::getTimeStamp(), ex.what());
       }
    return 0;
    }

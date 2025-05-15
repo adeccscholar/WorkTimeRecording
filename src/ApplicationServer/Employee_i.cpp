@@ -69,22 +69,34 @@ char* Employee_i::name() {
    return CORBA::string_dup(data_.name.c_str());
    }
 
-/*
+ Organization::EGender Employee_i::gender() {
+    return data_.gender;
+    }
 
+ 
+ char* Employee_i::getFullName() {
+    std::string strName = std::string{ data_.firstname } + " "s + data_.name;
+    return CORBA::string_dup(strName.c_str());
+    }
 
-   // IDL Attribute
-   virtual Organization::EGender gender() override;
+ CORBA::Double Employee_i::salary() {
+    return data_.salary;
+    }
 
-   // IDL Operation
-   virtual char* getFullName() override;
+ Organization::YearMonthDay Employee_i::startDate() {
+    return data_.startDate;
+    }
 
-   // IDL Attribute von Employee
-   virtual CORBA::Double salary() override;
-   virtual Organization::YearMonthDay startDate() override;
-   virtual CORBA::Boolean isActive() override;
+ CORBA::Boolean Employee_i::isActive() {
+    return data_.isActive;
+    }
 
-   // helper to set oid fpr concrete object
-   void set_oid(PortableServer::ObjectId const& oid);
+// helper to set oid for the concrete object
+void Employee_i::set_oid(PortableServer::ObjectId const& oid) {
+   oid_ = oid;
+   }
 
-   void destroy() override;
-*/
+// destroy the concrete object on the server (transient)
+void Employee_i::destroy() {
+   }
+

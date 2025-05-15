@@ -131,9 +131,27 @@ module Organization {
     */   
 	typedef sequence<Employee> EmployeeSeq;
 
-    // -------------------------------------------
-    // Main Service Interface for the Company
-    // -------------------------------------------
+    /**
+      \interface
+      \brief CORBA interface representing the central company service.
+     
+      \details This is the main CORBA service interface that provides access to employee-related
+               operations at the organizational level. It enables clients to query and interact
+               with employees via both reference-based (`Employee`) and value-based (`EmployeeData`) 
+               access.
+     
+      \details The `Company` interface serves as the central entry point to:
+                - Query employee information (individual or bulk)
+                - Retrieve metadata (e.g., system time)
+                - Perform aggregate calculations (e.g., salary sum)
+                - Access both live CORBA object references and stateless data snapshots
+     
+      \details This allows for both object-oriented usage and decoupled data transfers 
+               (e.g., via serialization).
+     
+      \note The implementation of this interface acts as a CORBA server-side component.
+            It will evolve in later stages to include write operations and persistent storage.
+     */
     interface Company {
 	    readonly attribute string nameCompany;      ///< Name of the company
 		

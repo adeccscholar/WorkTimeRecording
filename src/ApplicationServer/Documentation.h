@@ -126,3 +126,10 @@
            components in the system. The IDL files are crucial for defining CORBA objects and the 
            interfaces exposed to clients and servers.
  */
+
+/**
+  \dir Src/ApplicationServer
+  \brief Contains the Source files for the Implementation of the main server for the time tracking
+
+  \details This directory includes all source files for the implementation of the corba server
+*/
