@@ -1,106 +1,100 @@
 # adecc Scholar: Distributed Enterprise Time-Tracking System
 
-## Übersicht
+## Overview
 
-Dieses Open-Source-Projekt wird im Rahmen des kostenlosen Schulungsangebots **adecc Scholar** entwickelt, das im Herbst 2020 während der Corona-Zeit mit 
-kostenlosen Streams auf dem [adecc Scholar Twitch-Kanal](https://www.twitch.tv/volker_adecc) startete. 
+This open-source project is developed as part of the free training initiative **adecc Scholar**, which began in autumn 2020 during the COVID-19 pandemic with free livestreams on the [adecc Scholar Twitch channel](https://www.twitch.tv/volker_adecc).
 
-Ziel dieses Projektes ist es, anhand eines praxisnahen Beispiels — einer Zeiterfassung innerhalb eines Unternehmens — die Entwicklung moderner verteilter 
-Systeme in **C++23** zu vermitteln.
+The goal of this project is to teach the development of modern distributed systems in **C++23** through a practical example — a time-tracking system within a company.
 
-## Hauptziele
+## Main Objectives
 
-- Vermittlung moderner C++-Techniken (einschließlich **C++23**) und Frameworks
-- Design und Implementierung eines verteilten Systems über verschiedene Rechnerklassen (Server, Desktop, Raspberry Pi, mobile Geräte)
-- Zugriff auf Datenbanken mit SQL
-- Integration von Sensor- und Gerätesteuerung (GPIO, I2C, SPI)
-- Diskussion von Projektsteuerung, Datenbankentwurf und Normalisierung
-- Demonstration plattformübergreifender Entwicklungen (Windows Server, Ubuntu Server, Windows/Linux Desktops, Embedded)
+- Teach modern C++ techniques (including **C++23**) and frameworks  
+- Design and implement a distributed system across various device classes (server, desktop, Raspberry Pi, mobile devices)  
+- Access databases using SQL  
+- Integrate sensor and device control (GPIO, I2C, SPI)  
+- Discuss project management, database design, and normalization  
+- Demonstrate cross-platform development (Windows Server, Ubuntu Server, Windows/Linux desktops, embedded devices)
 
-## Architektur
+## Architecture
 
-1. **Application Server**
-   - Betriebssystem: **Ubuntu Linux**
-   - CORBA/TAO als Middleware für verteilte Objekte
-   - ODBC-Zugriff auf MS SQL Server
-   - zentrale Implementierung der Business Logik
+### 1. Application Server
 
-2. **Datenbank-Server**
-   - Betriebssystem: **Windows Server**
-   - Microsoft SQL Server
-   - Relationale Modellierung und Normalisierung
+- Operating system: **Ubuntu Linux**
+- CORBA/TAO as middleware for distributed objects
+- ODBC access to MS SQL Server
+- Central implementation of business logic
 
-3. **Arbeitsplatz-Clients**
-   - Windows- und Linux-Desktops
-   - CORBA/TAO als Middleware 
-   - Qt6-basierte GUI für Zeiterfassung und Berichtswesen
+### 2. Database Server
 
-4. **Embedded Clients (Raspberry Pi)**
-   - CORBA/TAO (Client und Server)
-   - Zugriff auf GPIO-Pins für diskrete Signale
-   - Nutzung von I2C/SPI für Sensoren, Anzeigen und RFID-Lesegeräte
-   - Eigenständige Rollen als Client und (lokaler) Server
-   - RFID-basierte Zugangskontrolle mittels endlicher Zustandsmaschine (Boost.SML)
+- Operating system: **Windows Server**
+- Microsoft SQL Server
+- Relational modeling and normalization
 
-5. **Zukünftige Erweiterungen**
-   - Web-REST-Server zur Einbindung mobiler Geräte
-   - Diskussion von Architekturfragen, Chancen und Risiken
+### 3. Desktop Clients
 
-## Verwendete Technologien und Bibliotheken
+- Windows and Linux desktops
+- CORBA/TAO as middleware
+- Qt6-based GUI for time tracking and reporting
 
-- **C++23**: Modernste Sprachfunktionen für Effizienz und Plattformunabhängigkeit
-- **Visual Studio C++**: Entwicklungsumgebung für Streams und Debugging
-  - VS C++ ist modern, es bietet die Möglichkeit zum Cross- Compiling 
-  - steht in der Community Version auch kostenlos zur Verfügung 
-- **GCC14** über Crosscompiling, auf Linux Plattformen, inklusive Raspberry PI
-- **Cmake** Buildverarbeitung
-  - Einbindung eigener Routinen, inklusive CORBA Workflow  
+### 4. Embedded Clients (Raspberry Pi)
+
+- CORBA/TAO (client and server)
+- Access to GPIO pins for discrete signals
+- Use of I2C/SPI for sensors, displays, and RFID readers
+- Operate independently as both client and (local) server
+- RFID-based access control using a finite state machine (Boost.SML)
+
+### 5. Future Extensions
+
+- Web REST server for mobile device integration
+- Discussion of architectural decisions, risks, and opportunities
+
+## Technologies and Libraries Used
+
+- **C++23**: Latest language features for efficiency and platform independence  
+- **Visual Studio C++**: IDE used for livestream development and debugging  
+  - Modern and supports cross-compilation  
+  - Free community version available  
+- **GCC14** via cross-compilation on Linux platforms, including Raspberry Pi  
+- **CMake** for build processing  
+  - Custom routines, including CORBA workflows  
 - **Boost**
-  - **Boost.SML** für finte Zustandsautomaten 
-  - **Boost.JSON** für JSON-Verarbeitung (in späterer Erweiterung)
-  - **Boost.Beast** für alternative HTTP-Anbindungen (in späterer Erweiterung)
-- **CORBA/TAO**: Aktuelle TAO-Version als Middleware
-  - Arbeiten mit ORB und POA, Basistechnologien, transiente und nicht transiente Servlets
-  - CORBA Naming Services
-  - CORBA Event Service, später auch TAO Events zur direkten Kommunikation
-- **Qt 6**: Datenbankzugriff (Qt SQL) und GUI-Entwicklung
-  - QDatabase und QWidgets
-  - kostenlose Version bei Open- Source Projekten, Möglichkeiten zum Download und eigenständigen Übersetzen  
+  - **Boost.SML** for finite state machines  
+  - **Boost.JSON** for JSON processing (in future extension)  
+  - **Boost.Beast** for alternative HTTP communication (in future extension)  
+- **CORBA/TAO**: Latest TAO version as middleware  
+  - ORB and POA basics, transient and persistent servants  
+  - CORBA Naming Services  
+  - CORBA Event Service, and later TAO Events for direct communication  
+- **Qt 6**: Database access (Qt SQL) and GUI development  
+  - QDatabase and QWidgets  
+  - Free version available for open-source projects, downloadable and buildable from source  
 - **Embarcadero C++ Builder**
-  - Einbindung älterer Werkzeuge (VCL, FMX)
-  - Brücke zwischen Legacy-Code und modernen Systemen
-- **MS SQL Server**: Relationale Datenbank
-  - kostenlose Express Version oder Develepment Edition für Entwickler 
+  - Integration of legacy tools (VCL, FMX)  
+  - Bridge between legacy code and modern systems  
+- **MS SQL Server**: Relational database  
+  - Free Express version or Developer Edition available for developers  
 
-### Embarcadero C++ Builder
+### Embarcadero C++ Builder
 
-Durch die Unterstützung von **Embarcadero C++ Builder** (VCL und FMX) zeigt das Projekt, wie sich auch ältere oder nicht zeitgemäße Werkzeuge 
-in eine moderne Systemarchitektur integrieren lassen. Damit eröffnen sich Möglichkeiten, bereits existierende Legacy-Applikationen anzubinden 
-und Schritt für Schritt zu migrieren.
+By supporting **Embarcadero C++ Builder** (VCL and FMX), the project demonstrates how older or less modern tools can be integrated into a modern system architecture. This opens up possibilities for connecting existing legacy applications and migrating them step-by-step.
 
-## Erste Schritte
+## Getting Started
 
-1. Repository klonen:
+1. Clone the repository:
    ```bash
    git clone https://github.com/adeccscholar/WorkTimeRecording.git
    ```
 
-2. C++-Server-Komponenten mit Visual Studio öffnen und auf Ubuntu Server deployen  
-3. Qt-Clients kompilieren und starten  
-4. Raspberry Pi-Images flashen und Konfiguration durchführen
+2. Open the C++ server components with Visual Studio and deploy them to the Ubuntu Server
+3. Compile and launch the Qt clients
+4. Flash Raspberry Pi images and complete the configuration
 
-## Mitmachen und Beiträge
-
-- Fork des Repositories anlegen  
-- Feature-Branches erstellen (z.B. `feat/my-feature`)  
-- Pull Requests mit ausführlicher Beschreibung  
-- Issues für Bugs und Verbesserungsvorschläge verwenden  
-
-## Lizenz und Copyright
+## License and Copyright
 
 ```text
 Copyright © adecc Systemhaus GmbH 2020–2025
 
-Dieses Repository steht größtenteils unter der GNU General Public License v3.0 (GPL-3.0).
-Abweichende Open Source Lizenzen in Teilprojekten möglich
+This repository is mostly licensed under the GNU General Public License v3.0 (GPL-3.0).
+Alternative open-source licenses may apply in subprojects.
 ```
