@@ -111,7 +111,7 @@
 */
 
 /**
-  \dir Src
+  \dir src
   \brief Source directory containing all source code files for all projects.
  
   \details This directory holds all C++ source files, including the implementation of core 
@@ -119,7 +119,7 @@
  */
 
  /**
-  \dir Src/IDL
+  \dir src/IDL
   \brief Contains the IDL (Interface Definition Language) files.
   
   \details This directory includes all IDL files used for defining interfaces between distributed 
@@ -130,7 +130,7 @@
  */
 
 /**
-  \dir Src/Tools
+  \dir src/Tools
   \brief Contains common Header files 
 
   \details This directory includes all header files with common tools for projects in the 
@@ -139,8 +139,16 @@
 */
 
 /**
-  \dir Src/ApplicationServer
+  \dir src/ApplicationServer
   \brief Contains the Source files for the Implementation of the main server for the time tracking
 
   \details This directory includes all source files for the implementation of the corba server
+*/
+
+/**
+  \dir src/Documentation
+  \brief Contains the header files with the documentation
+
+  \details This directory includes only header files for the documentation of the enterprise 
+           time tracking system.
 */

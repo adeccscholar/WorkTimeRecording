@@ -13,5 +13,11 @@ set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/out/${PLATFORM}/${CMAKE_BUILD_TYPE}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 
+# Add the interface library for Tools
+add_library(ProjectTools INTERFACE)
+
+# Register the include directory with this interface library
+target_include_directories(ProjectTools INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Tools)
+
 # Add subprojects
 add_subdirectory(ApplicationServer)
