@@ -1,0 +1,23 @@
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author has
+dedicated any and all copyright interest in the software to the
+public domain by waiving all of their rights to the software under
+copyright law and related rights, to the extent allowed by law.
+
+You can do this by including a statement like this:
+
+    The author has dedicated any and all copyright interest in
+    this software to the public domain by waiving all of their rights
+    to the work worldwide under copyright law, including all related
+    and neighboring rights, to the extent allowed by law.
+
+    You can copy, modify, distribute and perform the work, even for
+    commercial purposes, all without asking permission.
+
+For more information, please refer to <https://unlicense.org/>

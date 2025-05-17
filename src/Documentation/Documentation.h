@@ -125,7 +125,18 @@
   \details This directory includes all IDL files used for defining interfaces between distributed 
            components in the system. The IDL files are crucial for defining CORBA objects and the 
            interfaces exposed to clients and servers.
+  \details All corba server and clients needing the directory and idl files to generate the
+           skeletons and stubs for the application.
  */
+
+/**
+  \dir Src/Tools
+  \brief Contains common Header files 
+
+  \details This directory includes all header files with common tools for projects in the 
+           distributed time tracking system. This are header who used to map the corba types to
+		   C++ and common used files for the programs.
+*/
 
 /**
   \dir Src/ApplicationServer
