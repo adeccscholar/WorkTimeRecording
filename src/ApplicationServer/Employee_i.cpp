@@ -43,6 +43,8 @@
 
 #include "Employee_i.h"
 
+#include "Tools.h"
+
 #include <iostream>
 #include <print>
 #include <stdexcept>
@@ -50,11 +52,11 @@
 
 Employee_i::Employee_i(EmployeeData const& data, PortableServer::POA_ptr poa) : 
                     data_(data), poa_(PortableServer::POA::_duplicate((poa))) {
-   std::println(std::cout, "[Employee_i ] Object created for id: {}", personId());
+   std::println(std::cout, "[Employee_i {}] Object created for id: {}", ::getTimeStamp(), personId());
    }
 
 Employee_i::~Employee_i() {
-   std::println(std::cout, "[Employee_i ] Object destroyed for id: {}", personId());
+   std::println(std::cout, "[Employee_i {}] Object destroyed for id: {}", ::getTimeStamp(), personId());
    }
 
 CORBA::Long Employee_i::personId() {
@@ -98,5 +100,15 @@ void Employee_i::set_oid(PortableServer::ObjectId const& oid) {
 
 // destroy the concrete object on the server (transient)
 void Employee_i::destroy() {
+   std::println(std::cout, "[Employee_i {}] destroy() called for ID {}", ::getTimeStamp(), personId());
+
+   try {
+      poa_->deactivate_object(oid_);  // Objekt deregistrieren
+      }
+   catch (CORBA::Exception const& ex) {
+      std::println(std::cerr, "[Employee_i {}] Exception during deactivate_object: {}", ::getTimeStamp(), toString(ex));
+      }
+
+   _remove_ref();  // Führt zu delete this bei RefCount 0
    }
 

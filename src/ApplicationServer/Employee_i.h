@@ -53,6 +53,15 @@ public:
      \param poa  The Portable Object Adapter responsible for this servant.
     */
    Employee_i(EmployeeData const& data, PortableServer::POA_ptr poa);
+
+   /**
+     \brief Destructor for the Employee_i servant.
+     \details Cleans up the Employee_i servant instance. Since CORBA reference counting
+              and POA object lifecycle management are used, this destructor typically does not
+              need to release individual CORBA resources manually. If dynamically allocated resources
+              or external connections are introduced in the future, cleanup logic should be placed here.
+     \details The destructor is only used to log the destruction and illustrate the workflow.
+    */
    virtual ~Employee_i();
 
    // =========================================================================

@@ -20,7 +20,7 @@ include (adecc_tao_settings.cmake)
 
 add_custom_target(generate_idl_files ALL DEPENDS ${CLIENT_GENERATED_SOURCES} ${SERVER_GENERATED_SOURCES})
 
-set(PROJECT_SOURCES AppServer.cpp 
+set(PROJECT_SOURCES AppServer.cpp Tools.h
                     EmployeeData.h
                     Employee_i.cpp Employee_i.h
                     Company_i.cpp Company_i.h

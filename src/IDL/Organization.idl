@@ -65,8 +65,8 @@ module Organization {
       \brief Exception thrown when an employee with a specific ID is not found.
     */
     exception EmployeeNotFound {
-        long requestedId;      ///< ID that was not found
-		TimePoint requestedAt; ///< Timestamp when the error occurred
+       long requestedId;      ///< ID that was not found
+		 TimePoint requestedAt; ///< Timestamp when the error occurred
        };
 
 
