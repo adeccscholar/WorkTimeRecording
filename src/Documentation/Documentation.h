@@ -146,6 +146,13 @@
 */
 
 /**
+  \dir src/RaspberryTerminal
+  \brief Contains the Source files for the Raspberry PI Terminal Application
+  \details This directory contains all source files for the Raspberry PI Application with the RFID
+           Reader for the time tracking and with environmental sensors.
+*/
+
+/**
   \dir src/Documentation
   \brief Contains the header files with the documentation
 
