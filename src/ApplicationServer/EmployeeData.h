@@ -54,12 +54,26 @@ struct PersonData {
            employment-specific attributes such as salary, employment start date,
            and active status.
  */
-struct EmployeeData {
-   CORBA::Long personID                 = -1;                   ///< Unique identifier for the employee
-   std::string firstname                = ""s;                  ///< First name
-   std::string name                     = ""s;                  ///< Last name
-   Organization::EGender gender         = Organization::OTHER;  ///< Gender (as defined in IDL)
+struct EmployeeData : public PersonData {
+   //CORBA::Long personID                 = -1;                   ///< Unique identifier for the employee
+   //std::string firstname                = ""s;                  ///< First name
+   //std::string name                     = ""s;                  ///< Last name
+   //Organization::EGender gender         = Organization::OTHER;  ///< Gender (as defined in IDL)
    double salary                        = 0.0;                  ///< Current salary (in company currency unit)
    Organization::YearMonthDay startDate = { 0, 0, 0 };          ///< Start date in Year-Month-Day format
    CORBA::Boolean isActive              = false;                ///< Employment status (active/inactive)
    };
+
+// startDate to chrono
+
+inline Organization::EmployeeData* createFrom(EmployeeData const& data) {
+   Organization::EmployeeData* employee_data = new Organization::EmployeeData();
+   employee_data->personId = data.personID;
+   employee_data->firstName = CORBA::string_dup(data.firstname.c_str());
+   employee_data->name = CORBA::string_dup(data.name.c_str());
+   employee_data->gender = data.gender;  
+   employee_data->isActive = data.isActive;
+   employee_data->startDate = data.startDate;
+   employee_data->salary = data.salary;
+   return employee_data;
+   }

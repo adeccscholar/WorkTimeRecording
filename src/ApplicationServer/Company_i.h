@@ -111,7 +111,7 @@ public:
       \throws Organization::EmployeeNotFound
       \return A CORBA Employee object reference.
      */
-   //virtual Organization::Employee* getEmployee(CORBA::Long personId);
+   virtual Organization::Employee* getEmployee(CORBA::Long personId);
 
    /**
      \brief Returns the raw employee data for a given employee ID.
@@ -119,7 +119,7 @@ public:
      \throws Organization::EmployeeNotFound
      \return A pointer to an Organization::EmployeeData structure.
     */
-   //virtual Organization::EmployeeData* getEmployeeData(CORBA::Long personId);
+   virtual Organization::EmployeeData* getEmployeeData(CORBA::Long personId);
 
    /**
      \brief Calculates the total salary of all active employees.

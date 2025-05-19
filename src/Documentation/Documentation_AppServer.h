@@ -14,9 +14,20 @@
 
  \section appserver_intro Introduction
 
- The CORBA Application Server is a core component of the distributed enterprise time-tracking system
+ The CORBA Application Server is a core component of the distributed enterprise time-tracking system based on CORBA
  developed as part of the **adecc Scholar** educational initiative. It runs on **Ubuntu Linux** and serves
  as a central coordination and data hub in a heterogeneous CORBA-based network.
+ 
+ It manages central components such as companies and provides servants to interact with external clients like time 
+ terminals and administration tools.
+
+ Key features:
+  - Company servant accessible via CORBA Naming Service
+  - Persistent and transient POA separation
+  - Multi-threaded ORB event loop
+  - Clean shutdown and resource handling
+
+ See \ref app_lifecycle for a detailed flow of initialization and shutdown.
 
  \section appserver_arch Architecture and Function
 
@@ -64,3 +75,57 @@
  \note This documentation is part of the adecc Scholar project —  
        Free educational materials for distributed systems in modern C++.
 */
+
+/**
+  \page app_lifecycle Application Lifecycle
+  \@brief Detailed breakdown of the server application's runtime behavior.
+ 
+  This document describes the control flow of the server, including CORBA setup, POA configuration,
+  servant creation, and shutdown handling.
+ 
+  ### 1. Signal Handling
+  - Registers signal handlers for graceful termination (SIGINT/SIGTERM).
+ 
+  ### 2. ORB Initialization
+  - Initializes the global ORB using command line arguments.
+  - Handles and logs errors if the ORB is not created.
+ 
+  ### 3. Root POA Acquisition
+  - Resolves "RootPOA" reference and narrows it.
+  - Activates its POA manager to allow request processing.
+ 
+  ### 4. POA Policies
+  - Defines a persistent POA (`CompanyPOA`) for long-lived servants.
+  - Defines a transient POA (`EmployeePOA`) for short-lived objects.
+ 
+  ### 5. Child POA Creation
+  - Creates `CompanyPOA` and `EmployeePOA` as children of the root POA.
+ 
+  ### 6. Company Servant Activation
+  - Instantiates and activates a servant implementing the `Company` interface.
+  - Obtains the object reference for use in the Naming Service.
+ 
+  ### 7. Naming Service Registration
+  - Registers the `Company` servant with the CORBA Naming Service under a known name.
+ 
+  ### 8. ORB Event Loop
+  - Starts the `orb->run()` loop in a background thread to handle client requests.
+ 
+  ### 9. Shutdown Wait
+  - Main thread blocks and periodically checks for shutdown signal.
+ 
+  ### 10. Naming Service Unbind
+  - Attempts to remove the object reference from the Naming Service.
+
+  ### 11. Deactivate Company Servant and count ref down to deletr
+  - Delete the servant object finally.
+  
+  ### 12. ORB Shutdown
+  - Calls `shutdown(false)` to unblock the ORB thread.
+ 
+  ### 13. POA Destruction
+  - Destroys both child POAs and the RootPOA in order.
+ 
+  ### 14. ORB Destruction
+  - Finally, the ORB is destroyed to free all resources.
+ */

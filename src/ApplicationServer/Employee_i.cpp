@@ -105,6 +105,10 @@ void Employee_i::destroy() {
    try {
       poa_->deactivate_object(oid_);  // Objekt deregistrieren
       }
+   catch(PortableServer::POA::ObjectNotActive const& ex) {
+      // Is thrown if the OID is not active (i.e. already deactivated). We can ignore this.
+      std::println(std::cout, "[Employee_i {}] OID is not active (i.e. already deactivated): {}", ::getTimeStamp(), toString(ex));
+      }
    catch (CORBA::Exception const& ex) {
       std::println(std::cerr, "[Employee_i {}] Exception during deactivate_object: {}", ::getTimeStamp(), toString(ex));
       }

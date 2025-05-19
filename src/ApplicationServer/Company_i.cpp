@@ -115,3 +115,68 @@ double Company_i::getSumSalary() {
                                              | std::views::transform([](EmployeeData const& e) { return e.salary; });
    return std::accumulate(active_salaries.begin(), active_salaries.end(), 0.0);
    }
+
+Organization::Employee* Company_i::getEmployee(CORBA::Long personId) {
+   std::println(std::cout, "[Company_i {}] getEmployee() called by client for ID = {}.", ::getTimeStamp(), personId);
+
+   // 1st seek in db
+   if (auto it = employee_database_.find(personId); it != employee_database_.end()) [[likely]] {
+      try {
+         Employee_i* employee_servant = new Employee_i(it->second, employee_poa_.in());
+
+         PortableServer::ObjectId_var oid = employee_poa_->activate_object(employee_servant);
+         employee_servant->set_oid(oid);
+
+         CORBA::Object_var obj_ref = employee_poa_->id_to_reference(oid.in());
+         Organization::Employee_var employee_ref = Organization::Employee::_narrow(obj_ref.in());
+
+         if(CORBA::is_nil(employee_ref)) {
+            std::println(std::cerr, "[Company_i {}] getEmployee(), CORBA Error while narrowing Reference for ID {}",
+                                 ::getTimeStamp(), personId);
+            return nullptr; // oder eine qualifizierte Fehlerbehandlung ToDo
+            }
+
+         std::println(std::cout, "[Company_i {}] getEmployee() returning Employee* for ID = {}.", ::getTimeStamp(), employee_ref->personId());
+         // BESITZWECHLER
+         return employee_ref._retn();
+         }
+      catch(CORBA::Exception const& ex) {
+         std::println(std::cerr, "[Company_i {}] getEmployee(), CORBA Exception creating dynamic employee ref for ID {}: {}",
+                                      ::getTimeStamp(), personId, toString(ex));
+         throw CORBA::INTERNAL();
+         }
+      catch(std::exception const& ex) {
+         std::println(std::cerr, "[Company_i {}] getEmployee(), C++ Exception creating dynamic employee ref for ID {}: {}",
+                                      ::getTimeStamp(), personId, ex.what());
+         throw CORBA::INTERNAL();
+         }
+      }
+   else {
+      std::println(std::cout, "[Company_i {}] Employee ID with {} not found. Throwing EmployeeNotFound", ::getTimeStamp(), personId);
+      Organization::EmployeeNotFound ex;
+      ex.requestedId = personId;
+      ex.requestedAt = getTimeStamp();
+      throw ex;
+      }
+
+   }
+
+Organization::EmployeeData* Company_i::getEmployeeData(CORBA::Long personId) {
+   std::println(std::cout, "[Company_i {}] getEmployeeData() called by client for ID = {}.", ::getTimeStamp(), personId);
+
+   // 1st seek employee in company database
+   if(auto it = employee_database_.find(personId); it != employee_database_.end()) [[likely]] {
+      // 2nd employee found prepare data for transmission
+      Organization::EmployeeData* employee_data = createFrom(it->second);
+      std::println(std::cout, "[Company_i {}] getEmployeeData() returning EmployeeData for ID = {}.", ::getTimeStamp(), employee_data->personId);
+      return employee_data;
+      }
+   else {
+      std::println(std::cout, "[Company_i {}] Employee ID with {} not found. Throwing EmployeeNotFound", ::getTimeStamp(), personId);
+      Organization::EmployeeNotFound ex;
+      ex.requestedId = personId;
+      ex.requestedAt = getTimeStamp();
+      throw ex;
+     }
+
+   }
