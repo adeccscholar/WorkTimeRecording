@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+
+
 include (adecc_cmake_tools_settings.cmake)
 
 # define output directory and set it for same points
@@ -20,4 +22,11 @@ add_library(ProjectTools INTERFACE)
 target_include_directories(ProjectTools INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Tools)
 
 # Add subprojects
+add_subdirectory(IDLGen)
 add_subdirectory(ApplicationServer)
+add_subdirectory(Client)
+if(PLATFORM STREQUAL "Raspberry")
+   add_subdirectory(RaspberryTerminal)
+endif()
+
+

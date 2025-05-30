@@ -211,81 +211,73 @@ int main(int argc, char *argv[]) {
       naming_context->rebind(name, company_ref.in());
       std::println("[{} {}] Company servant registered with nameservice as {}.", strAppl, ::getTimeStamp(), strName);
 
-      // --------------------
-      // end of stream, new 
-      
-      // --------------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------------
       // (8) Launch the ORB event loop in a separate thread
-      // --------------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Starting ORB event loop in separate thread ...", strAppl, ::getTimeStamp());
 
-      std::println(std::cout, "[{} {}] Starting ORB event loop in a separate thread...", strAppl, ::getTimeStamp());
 
       std::thread orb_thread([&]() {
-         try {
-            orb_global->run();
-            std::println(std::cout, "[ORB Thread {}] orb->run() finished.", ::getTimeStamp());
-            }
-         catch (CORBA::Exception const& ex) {
-            std::println(std::cerr, "[ORB Thread {}] CORBA Exception in orb->run(): ", ::getTimeStamp(), toString(ex));
-            }
-         catch(std::exception const& ex) {
-            std::println(std::cerr, "[ORB Thread {}] C++ Exception in orb->run(): ", ::getTimeStamp(), ex.what());
-            }
-         catch (...) {
-            std::println(std::cerr, "[ORB Thread {}] Unknown exception in orb->run().", ::getTimeStamp());
-            }
-         });
-
-      // --------------------------------------------------------------------------------
-      // (9) Wait for shutdown signal in the main thread
-      // --------------------------------------------------------------------------------
-      std::println(std::cout, "[{} {}] Server ready. Waiting for shutdown signal (e.g., Ctrl+C)...", strAppl, ::getTimeStamp());
-
-      while (!shutdown_requested) {
-         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+          std::string strOrb = "ORB Thread"s;
+          try {
+             orb_global->run();
+             std::println("   [{} {}] orb->run() finished.", strAppl, ::getTimeStamp());
+             }
+          catch(CORBA::Exception const& ex) {
+             std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), toString(ex));
+             }
+          catch (std::exception const& ex) {
+             std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), ex.what());
+             }
+          catch (...) {
+             std::println(std::cerr, "  [{} {}], unknown Exception in orb->run()", strOrb, ::getTimeStamp());
+             }
+         } );
+      // ---------------------------------------------------------------------------------
+      // (9) Wait for shutdown signal in main thread (soft closing)
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Server is ready. <Waiting for shutdown signal (e.g. Cntrl+C) ...", strAppl, ::getTimeStamp());
+      while (!shutdown_requested) { 
+         std::this_thread::sleep_for(std::chrono::milliseconds(200));  
          }
 
-      // --------------------------------------------------------------------------------
-      // (10) Cleanup: Unbind from Naming Service
-      // --------------------------------------------------------------------------------
-      std::println(std::cout, "[{} {}] Unbinding from NameService...", strAppl, ::getTimeStamp());
+      // ---------------------------------------------------------------------------------
+      // (10) Cleanup: unbind nameservices
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Unbinding from nameservice ...", strAppl, ::getTimeStamp());
       try {
          naming_context->unbind(name);
          }
-      catch (CORBA::Exception const& ex) {
-         std::println(std::cerr, "[{} {}] Error unbinding from NameService (maybe already gone): {}", strAppl, ::getTimeStamp(), toString(ex));
+      catch(CORBA::Exception const& ex) {
+         std::println(std::cerr, "[{} {}] Error unbinding from nameservice (maybe already gone): {}", strAppl, ::getTimeStamp(), toString(ex));
          }
 
-      // --------------------------------------------------------------------------------
-      // (11) Deactivate servant and remove refcount (= 0) to delete servant
-      // --------------------------------------------------------------------------------
-      std::println(std::cout, "[{} {}] Deactivate servant and remove refcount...", strAppl, ::getTimeStamp());
+      // ---------------------------------------------------------------------------------
+      // (11) Cleanup: deactivate servant and set refcount - 1
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Deactivate servant and remove refcount()...", strAppl, ::getTimeStamp());
       company_poa->deactivate_object(company_oid);
       company_servant->_remove_ref();
-      
-      // --------------------------------------------------------------------------------
-      // (12) Shutdown the ORB to stop event processing
-      // --------------------------------------------------------------------------------
-      std::println(std::cout, "[{} {}] Shutdown requested, calling orb->shutdown(false) ...", strAppl, ::getTimeStamp());
-      orb_global->shutdown(false); // false = nicht blockieren, beende aber sofort run()
 
-      // ORB wurde gestoppt, warte auf Thread-Ende ===
-      if (orb_thread.joinable()) {
-         orb_thread.join();
-         }
+      // ---------------------------------------------------------------------------------
+      // (12) Shhutdown orb and stop event processing
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Shutdown requested, calling orb->shutdown(false)...", strAppl, ::getTimeStamp());
+      orb_global->shutdown(true);
 
-      // --------------------------------------------------------------------------------
-      // (13) Destroy POAs (first children, then root)
-      // wait for running requests, clear objects
-      // --------------------------------------------------------------------------------
-      std::println(std::cout, "[{} {}] Destroying POAs...", strAppl, ::getTimeStamp());
+      if (orb_thread.joinable()) orb_thread.join();
+
+      // ---------------------------------------------------------------------------------
+      // (13) Destroying POAs (first children, later the root)
+      // wait for running requests, clear object
+      // ---------------------------------------------------------------------------------
+      std::println("[{} {}] Destroying POAs ...", strAppl, ::getTimeStamp());
       employee_poa->destroy(true, true);
       company_poa->destroy(true, true);
 
       root_poa->destroy(true, true);
-      std::println(std::cout, "[{} {}] POAs destroyed.", strAppl, ::getTimeStamp());
+      std::println("[{} {}] POAs destroyed.", strAppl, ::getTimeStamp());
 
-      // -----------
       }
    catch(CORBA::Exception const& ex) {
       std::println(std::cerr, "[{} {}] CORBA Exception caught: {}", strAppl, ::getTimeStamp(), toString(ex));
@@ -297,21 +289,21 @@ int main(int argc, char *argv[]) {
       std::println(std::cerr, "[{} {}] Unknown exception caught.", strAppl, ::getTimeStamp());
       return 1;
       }
-   // -----------------------------------------------------------------------------------------------------------------
 
-   if (!CORBA::is_nil(orb_global.in())) {
+   // ------------------------------------------------------------------------------------
+   // (13) Destroying ORB 
+   // ------------------------------------------------------------------------------------
+
+   if(!CORBA::is_nil(orb_global.in())) {
       try {
-         std::println(std::cout, "[{} {}] Destroying ORB...", strAppl, ::getTimeStamp());
+         std::println(std::cout, "[{} {}] Destroying ORB ...", strAppl, ::getTimeStamp());
          orb_global->destroy();
          std::println(std::cout, "[{} {}] ORB destroyed.", strAppl, ::getTimeStamp());
          }
-      catch (CORBA::Exception const& ex) {
-         std::println(std::cerr, "[{} {}] Exception while destroying ORB: {}", strAppl, ::getTimeStamp(), toString(ex));
+      catch(CORBA::Exception const& ex) {
+         std::println(std::cerr, "[{} {}] CORBA Exception caught while destroying ORB: {}", strAppl, ::getTimeStamp(), toString(ex));
          }
       }
-
    std::println(std::cout, "[{} {}] Server exited successfully.", strAppl, ::getTimeStamp());
-
-   // ------------------------------------------------------------------------------------------------------------------
    return 0;
    }
