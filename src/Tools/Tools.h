@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+ï»¿// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /**
@@ -34,7 +34,7 @@
 
   \author Volker Hillmann (adecc Systemhaus GmbH)
 
-  \copyright Copyright © adecc Systemhaus GmbH 2021–2025
+  \copyright Copyright Â© adecc Systemhaus GmbH 2021â€“2025
 
   \license This project is mostly licensed under the GNU General Public License v3.0.
            For more information, see the LICENSE file.
@@ -45,7 +45,7 @@
 
 #pragma once
 
-#include "OrganizationC.h"
+#include "BasicsC.h"
 
 #include <tao/corba.h>
 
@@ -84,14 +84,14 @@ inline std::string getTimeStamp(std::chrono::time_point<std::chrono::system_cloc
 }
 
 /**
-  \brief Converts an Organization::YearMonthDay to a std::chrono::year_month_day.
+  \brief Converts an Basics::YearMonthDay to a std::chrono::year_month_day.
 
   \details This function takes a `YearMonthDay` struct, typically generated from the IDL definition in
-           `Organization.idl`, and converts it into a C++20 `std::chrono::year_month_day` object.
+           `BAsics.idl`, and converts it into a C++20 `std::chrono::year_month_day` object.
            It is intended to bridge between IDL-generated C-style time representations and the modern
            C++ date/time facilities.
 
-  \param ymd A reference to an `Organization::YearMonthDay` struct containing year, month, and day values.
+  \param ymd A reference to an `Basics::YearMonthDay` struct containing year, month, and day values.
               - `year` is interpreted directly as a Gregorian calendar year.
               - `month` and `day` are expected to be valid and in 1-based indexing.
 
@@ -104,10 +104,10 @@ inline std::string getTimeStamp(std::chrono::time_point<std::chrono::system_cloc
 
   \note This function does not validate calendar correctness (e.g., February 30 will not raise an error).
 
-  \see Organization::YearMonthDay
+  \see Basics::YearMonthDay
   \see std::chrono::year_month_day
  */
-inline std::chrono::year_month_day convertTo(Organization::YearMonthDay const& ymd) {
+inline std::chrono::year_month_day convertTo(Basics::YearMonthDay const& ymd) {
    return std::chrono::year_month_day{ std::chrono::year  { ymd.year },
                                        std::chrono::month { static_cast<unsigned int>(ymd.month) },
                                        std::chrono::day   { static_cast<unsigned int>(ymd.day) }
@@ -134,8 +134,8 @@ inline std::chrono::year_month_day convertTo(Organization::YearMonthDay const& y
   \see std::chrono::year_month_day
   \see Organization::YearMonthDay
  */
-inline Organization::YearMonthDay convertTo(std::chrono::year_month_day const& ymd) {
-   Organization::YearMonthDay result;
+inline Basics::YearMonthDay convertTo(std::chrono::year_month_day const& ymd) {
+   Basics::YearMonthDay result;
    result.year  = static_cast<CORBA::Long>(int(ymd.year()));
    result.month = static_cast<CORBA::Short>(unsigned(ymd.month()));
    result.day   = static_cast<CORBA::Short>(unsigned(ymd.day()));
@@ -164,7 +164,7 @@ inline Organization::YearMonthDay convertTo(std::chrono::year_month_day const& y
   \see Organization::TimePoint
   \see std::chrono::system_clock::time_point
  */
-inline std::chrono::system_clock::time_point convertTo(Organization::TimePoint const& tp) {
+inline std::chrono::system_clock::time_point convertTo(Basics::TimePoint const& tp) {
    return std::chrono::system_clock::time_point(std::chrono::milliseconds(tp.milliseconds_since_epoch));
    }
 
@@ -189,9 +189,9 @@ inline std::chrono::system_clock::time_point convertTo(Organization::TimePoint c
   \see std::chrono::system_clock::time_point
   \see Organization::TimePoint
  */
-inline Organization::TimePoint converTo(std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
+inline Basics::TimePoint converTo(std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
    auto value_milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-   Organization::TimePoint tp{ .milliseconds_since_epoch = value_milliseconds };
+   Basics::TimePoint tp{ .milliseconds_since_epoch = value_milliseconds };
    return tp;
    }
 
@@ -303,7 +303,7 @@ inline std::string toString(CORBA::TRANSIENT const& ex) {
   \pre The `CORBA::Exception` type must support insertion into an `std::ostream` (i.e., `operator<<` must be overloaded).
   \post The returned string will contain the serialized content of the exception, suitable for logs or error messages.
 
-  \note This function performs no formatting or parsing — it directly relies on the `operator<<` overload for `CORBA::Exception`.
+  \note This function performs no formatting or parsing â€” it directly relies on the `operator<<` overload for `CORBA::Exception`.
 
   \see CORBA::Exception
  */

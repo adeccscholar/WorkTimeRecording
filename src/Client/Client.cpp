@@ -1,7 +1,11 @@
-
+﻿
 #include "Tools.h"
+#include "my_logging.h"
+#include "Corba_Interfaces.h"
 
 #include <OrganizationC.h>
+
+#include "Employee_Tools.h"
 
 #include <tao/corba.h>
 #include <orbsvcs/CosNamingC.h>
@@ -20,17 +24,29 @@ using namespace std::string_literals;
 #include <Windows.h>
 #endif
 
+static_assert(CORBAStub<Organization::Company>, "Organization::Company erfüllt nicht das CORBAStub-Concept");
+static_assert(CORBAStub<Organization::Employee>, "Organization::Employee erfüllt nicht das CORBAStub-Concept");
+static_assert(CORBAStubWithDestroy<Organization::Employee>, "Organization::Employee erfüllt nicht CORBAStubWithDestroy");
 
 int main(int argc, char *argv[]) {
    const std::string strMainClient = "Client"s;
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);
 #endif
-   // Platzhalter f�r Variable
-   std::println(std::cout, "[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
+   // Platzhalter für Variable
+   log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
-      // ORBClient<Organization::Company> orb("Client"s, argc, argv, "GlobalCorp/CompanyService"s);
+      CORBAStubHolder<Organization::Company, Organization::Employee> test("Test", argc, argv, "Param1", "Param2");
+      //*
+      ORBClient<Organization::Company> orb("ORB + Company"s, argc, argv, "GlobalCorp/CompanyService"s);
+      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(orb.factory()->getTimeStamp())));
+      std::println(std::cout, "Company {}, to paid salaries {:.2f}", orb.factory()->nameCompany(), orb.factory()->getSumSalary());
+      GetEmployee(orb.factory(), 105);
+      GetEmployees(orb.factory());
+      Organization::Employee_var employee = orb.factory()->getEmployee(180);
+      //*/
 
+      /*
       // 1st ORB initialisieren
       CORBA::ORB_var orb = CORBA::ORB_init(argc, argv);
       std::println(std::cout, "[{} {}] ORB initialized.", strMainClient, ::getTimeStamp());
@@ -58,43 +74,44 @@ int main(int argc, char *argv[]) {
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", company_var->nameCompany(), company_var->getSumSalary());
 
       Organization::Employee_var employee = company_var->getEmployee(180);
-      // Problematisch, �berspringt Freigabe
+      // Problematisch, überspringt Freigabe
 
       // ----------------------------------------------------------------------------------------------------------------------
 
       while (orb->work_pending()) orb->perform_work();
       orb->destroy();
       std::println(std::cout, "[{} {}] ORB destroyed.", strMainClient, ::getTimeStamp());
+      */
       }
    catch(Organization::EmployeeNotFound const& ex) {
       // Notleine falls Exception vorher nicht behandelt wurde
-      std::println(std::cerr, "[{} {}] unhandled EmployNotFound Exception: ID: {} at {}.", 
-              strMainClient, ::getTimeStamp(), ex.requestedId, getTimeStamp(convertTo(ex.requestedAt)));
+      log_error("[{} {}] unhandled 'EmployNotFound'- Exception with Employee ID: {} at {}.", 
+                 strMainClient, ::getTimeStamp(), ex.requestedId, getTimeStamp(convertTo(ex.requestedAt)));
       return 1;
       }
    catch(CORBA::COMM_FAILURE const& ex) {
-      std::println(std::cerr, "[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
+      log_error("[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
       return 2;
       }
    catch(CORBA::TRANSIENT const& ex) {
-      std::println(std::cerr, "[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
+      log_error("[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
       return 3;
       }
    catch(CORBA::Exception const& ex) {
-      std::println(std::cerr, "[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
+      log_error("[{} {}] {}", strMainClient, ::getTimeStamp(), toString(ex));
       return 4;
       }
    catch(std::exception const& ex) {
-      std::println(std::cerr, "[{} {}] C++ Standard Exception: {}", strMainClient, ::getTimeStamp(), ex.what());
+      log_error("[{} {}] C++ Standard Exception: {}", strMainClient, ::getTimeStamp(), ex.what());
       }
    catch(...) {
-      std::println(std::cerr, "[{} {}] unknown exception caught, critical error.", strMainClient, ::getTimeStamp());
+      log_error("[{} {}] unknown exception caught, critical error.", strMainClient, ::getTimeStamp());
       return 101;
       }
 
 
-   std::println(std::cout, "[{} {}] Client exited gracefully.", strMainClient, ::getTimeStamp());
+   log_state("[{} {}] Client exited gracefully.", strMainClient, ::getTimeStamp());
 
-   // Platzhalter f�r verz�gerte Ausgabe
+   // Platzhalter für verzögerte Ausgabe
    return 0;
     }

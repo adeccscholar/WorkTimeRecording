@@ -19,7 +19,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTP
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools)
-target_link_libraries(${PROJECT_NAME} PRIVATE IDL_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})
 
 # target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})
 

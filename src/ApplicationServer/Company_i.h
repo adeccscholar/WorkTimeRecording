@@ -91,7 +91,7 @@ public:
      \brief Gets the current timestamp of the server.
      \return CORBA::TimePoint structure with current time.
     */
-   virtual Organization::TimePoint getTimeStamp() override;
+   virtual Basics::TimePoint getTimeStamp() override;
 
    /**
      \brief Returns all employees as CORBA object references.

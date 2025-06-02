@@ -84,10 +84,10 @@ char* Company_i::nameCompany() {
    }
 
 // candidate for own function converTo !!!
-Organization::TimePoint Company_i::getTimeStamp() {
+Basics::TimePoint Company_i::getTimeStamp() {
    auto now = std::chrono::system_clock::now();
    auto value_milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-   Organization::TimePoint tp { .milliseconds_since_epoch = value_milliseconds };
+   Basics::TimePoint tp { .milliseconds_since_epoch = value_milliseconds };
    return tp;
    }
 

@@ -1,0 +1,13 @@
+#include "Basics.idl"
+
+module Sensors {
+
+   interface Sensors_Data {
+      readonly attribute Basics::TimePoint timepoint;
+	  readonly attribute unsigned short ambient_light;
+	  readonly attribute double temperature;
+	  readonly attribute double pressure;
+	  readonly attribute double humidity;
+      };
+	  
+};

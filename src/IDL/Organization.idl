@@ -23,6 +23,8 @@
  
   \note This Software is part of the adecc Scholar project – Free educational materials for modern C++.
  */
+ 
+#include "Basics.idl"
 
 /// Corba namespace / module for the Organization / Company with IDL defined types and interfaces.
 module Organization {
@@ -40,23 +42,6 @@ module Organization {
       };
 
 
-   /**
-     \brief Represents a point in time as Unix timestamp in milliseconds.
-   */
-   struct TimePoint {
-      long long milliseconds_since_epoch;  ///< Unix timestamp, milliseconds since the Unix epoch (1970-01-01T00:00:00Z).
-      };
-	   
-	   
-    /**
-      \brief Represents a calendar date using year, month, and day.
-    */	   
-   struct YearMonthDay {
-      long year;   ///< Full year, e.g., 2025
-      short month; ///< Month [1–12]
-      short day;   ///< Day [1–31]
-      };
-
     // ----------------------------------------------------------------------------------------------
     //  user defined Exception 
     // ----------------------------------------------------------------------------------------------
@@ -65,8 +50,8 @@ module Organization {
       \brief Exception thrown when an employee with a specific ID is not found.
     */
     exception EmployeeNotFound {
-       long requestedId;      ///< ID that was not found
-		 TimePoint requestedAt; ///< Timestamp when the error occurred
+       long requestedId;              ///< ID that was not found
+	   Basics::TimePoint requestedAt; ///< Timestamp when the error occurred
        };
 
 
@@ -76,14 +61,14 @@ module Organization {
 	  \details Person and Employee Data are combined for an easier use.
     */
 	struct EmployeeData {
-        long   personId;            ///< Unique person ID
-        string firstName;           ///< First name of the person
-        string name;                ///< Last name (surname) of the person
-        EGender gender;             ///< Gender of the person
+        long                 personId;     ///< Unique person ID
+        string               firstName;    ///< First name of the person
+        string               name;         ///< Last name (surname) of the person
+        EGender              gender;       ///< Gender of the person
 
-        double salary;              ///< Current salary [should be greater as 0.0 when Employee currently active]
-        YearMonthDay startDate;     ///< Start date of employment
-        boolean isActive;           ///< Whether the employee is currently active
+        double               salary;       ///< Current salary [should be greater as 0.0 when Employee currently active]
+        Basics::YearMonthDay startDate;    ///< Start date of employment
+        boolean              isActive;     ///< Whether the employee is currently active
 	   }; 
 
    /**
@@ -114,9 +99,9 @@ module Organization {
           \name Attributes and functions which part of employee representation
 		    \{
 		  */		
-        readonly attribute double salary;            ///< Current salary of employee [should be greater as 0.0 when Employee currently active]
-        readonly attribute YearMonthDay startDate;   ///< Date the employee started
-        readonly attribute boolean isActive;         ///< Whether the employee is currently active
+        readonly attribute double               salary;      ///< Current salary of employee [should be greater as 0.0 when Employee currently active]
+        readonly attribute Basics::YearMonthDay startDate;   ///< Date the employee started
+        readonly attribute boolean              isActive;    ///< Whether the employee is currently active
 		
 		/// \}
 		
@@ -159,7 +144,7 @@ module Organization {
           \brief Returns a timestamp of the current system time.
           \return A TimePoint representing the current time in milliseconds since epoch.
         */
-	    TimePoint                 getTimeStamp();   
+	    Basics::TimePoint         getTimeStamp();   
         
 	    /**
           \brief Returns a list of all employees.

@@ -1,59 +1,95 @@
+cmake_minimum_required(VERSION 3.26)
 
-include (../adecc_tao_settings.cmake)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(IDL_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/idl")
-file(MAKE_DIRECTORY ${IDL_OUTPUT_DIR})
+include(../adecc_tao_settings.cmake)
 
-set(IDL_FILES "${CMAKE_SOURCE_DIR}/IDL/Organization.idl")
+function(generate_idl_group GROUP_NAME)
+    set(IDL_FILES ${ARGN})
 
-# Listen fÃ¼r die generierten Quell- und Header-Dateien
-set(GENERATED_SRCS)
-set(GENERATED_HDRS)
+    set(IDL_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/idl/${GROUP_NAME}")
+    file(MAKE_DIRECTORY ${IDL_OUTPUT_DIR})
 
-# Generiere die Dateien mit tao_idl
-   foreach(IDL_FILE ${IDL_FILES})
-      get_filename_component(IDL_NAME ${IDL_FILE} NAME_WE)
-      message(STATUS "IDL:  ${IDL_FILE}")
+    set(GENERATED_SRCS)
+    set(GENERATED_HDRS)
+    set(SERVER_GENERATED_SOURCES)
+    set(SERVER_GENERATED_HEADERS)
+    set(CLIENT_GENERATED_SOURCES)
+    set(CLIENT_GENERATED_HEADERS)
 
-        # Generierte Dateien fÃ¼r diese IDL
-      set(CPP_C "${IDL_OUTPUT_DIR}/${IDL_NAME}C.cpp")
-      set(H_C   "${IDL_OUTPUT_DIR}/${IDL_NAME}C.h")
-      set(CPP_S "${IDL_OUTPUT_DIR}/${IDL_NAME}S.cpp")
-      set(H_S   "${IDL_OUTPUT_DIR}/${IDL_NAME}S.h")
-      set(CPP_I "${IDL_OUTPUT_DIR}/${IDL_NAME}I.cpp")
-      set(H_I   "${IDL_OUTPUT_DIR}/${IDL_NAME}I.h")
+    foreach(IDL_FILE IN LISTS IDL_FILES)
+        get_filename_component(IDL_NAME ${IDL_FILE} NAME_WE)
+        get_filename_component(IDL_DIR ${IDL_FILE} DIRECTORY)
+        message(STATUS "Generating IDL for group '${GROUP_NAME}': ${IDL_FILE}")
+        message(STATUS "Directory for include: ${IDL_DIR}")
 
-      list(APPEND GENERATED_SRCS ${CPP_C} ${CPP_S} ${CPP_I})
-      list(APPEND GENERATED_HDRS ${H_C} ${H_S} ${H_I})
+        set(CPP_C "${IDL_OUTPUT_DIR}/${IDL_NAME}C.cpp")
+        set(H_C   "${IDL_OUTPUT_DIR}/${IDL_NAME}C.h")
+        set(CPP_S "${IDL_OUTPUT_DIR}/${IDL_NAME}S.cpp")
+        set(H_S   "${IDL_OUTPUT_DIR}/${IDL_NAME}S.h")
+        set(CPP_I "${IDL_OUTPUT_DIR}/${IDL_NAME}I.cpp")
+        set(H_I   "${IDL_OUTPUT_DIR}/${IDL_NAME}I.h")
 
-      add_custom_command(
-         OUTPUT ${CPP_C} ${H_C} ${CPP_S} ${H_S} ${CPP_I} ${H_I}
-         COMMAND tao_idl -o "${IDL_OUTPUT_DIR}" "${IDL_FILE}"
-         DEPENDS "${IDL_FILE}"
-         COMMENT "Generiere TAO IDL Dateien fuer ${IDL_NAME}"
-         VERBATIM
-         )
+        # Liste der tatsächlich zu erwartenden Outputs
+        set(ALL_OUTPUTS ${CPP_C} ${H_C} ${CPP_S} ${H_S})
 
-      list(APPEND SERVER_GENERATED_SOURCES ${IDL_OUTPUT_DIR}/${IDL_NAME}S.cpp)
-      list(APPEND SERVER_GENERATED_HEADERS ${IDL_OUTPUT_DIR}/${IDL_NAME}S.h)
-      list(APPEND SERVER_GENERATED_SOURCES ${IDL_OUTPUT_DIR}/${IDL_NAME}C.cpp)
-      list(APPEND SERVER_GENERATED_HEADERS ${IDL_OUTPUT_DIR}/${IDL_NAME}C.h)
-      list(APPEND CLIENT_GENERATED_SOURCES ${IDL_OUTPUT_DIR}/${IDL_NAME}C.cpp)
-      list(APPEND CLIENT_GENERATED_HEADERS ${IDL_OUTPUT_DIR}/${IDL_NAME}C.h)
-   endforeach()
+        # Versuche optional I-Dateien nur dann einzufügen, wenn sie erzeugt werden
+        if(EXISTS ${CPP_I})
+            list(APPEND ALL_OUTPUTS ${CPP_I})
+        endif()
+        if(EXISTS ${H_I})
+            list(APPEND ALL_OUTPUTS ${H_I})
+        endif()
 
- # Ziel, um alle IDL Dateien zu generieren
-  add_custom_target(generate_idl_files ALL DEPENDS ${GENERATED_SRCS} ${GENERATED_HDRS}
-     )
+        add_custom_command(
+            OUTPUT ${ALL_OUTPUTS}
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${IDL_OUTPUT_DIR}"
+            COMMAND tao_idl -I "${IDL_DIR}" -o "${IDL_OUTPUT_DIR}" "${IDL_FILE}"
+            DEPENDS "${IDL_FILE}"
+            COMMENT "Generating TAO IDL files for ${IDL_NAME} (group ${GROUP_NAME})"
+            VERBATIM
+        )
 
-# Stubs (Client): Nur C-Dateien
-add_library(IDL_Stubs STATIC ${CLIENT_GENERATED_SOURCES})
-target_include_directories(IDL_Stubs PUBLIC ${IDL_OUTPUT_DIR})
-add_dependencies(IDL_Stubs generate_idl_files)
+        list(APPEND GENERATED_SRCS ${CPP_C} ${CPP_S})
+        list(APPEND GENERATED_HDRS ${H_C} ${H_S})
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/idl")
+        list(APPEND CLIENT_GENERATED_SOURCES ${CPP_C})
+        list(APPEND CLIENT_GENERATED_HEADERS ${H_C})
 
-# Skeletons (Server): S- und I-Dateien
-add_library(IDL_Skeletons STATIC ${SERVER_GENERATED_SOURCES})
-target_include_directories(IDL_Skeletons PUBLIC ${IDL_OUTPUT_DIR})
-add_dependencies(IDL_Skeletons generate_idl_files)
+        list(APPEND SERVER_GENERATED_SOURCES ${CPP_C} ${CPP_S})
+        list(APPEND SERVER_GENERATED_HEADERS ${H_C} ${H_S})
+
+        # Falls die Dateien erzeugt werden, hinzufügen
+        if(EXISTS ${CPP_I})
+            list(APPEND GENERATED_SRCS ${CPP_I})
+            list(APPEND SERVER_GENERATED_SOURCES ${CPP_I})
+        endif()
+        if(EXISTS ${H_I})
+            list(APPEND GENERATED_HDRS ${H_I})
+            list(APPEND SERVER_GENERATED_HEADERS ${H_I})
+        endif()
+    endforeach()
+
+    add_custom_target(${GROUP_NAME}_generate_idl_files
+        DEPENDS ${GENERATED_SRCS} ${GENERATED_HDRS}
+    )
+
+    add_library(${GROUP_NAME}_Stubs STATIC ${CLIENT_GENERATED_SOURCES})
+    target_include_directories(${GROUP_NAME}_Stubs PUBLIC ${IDL_OUTPUT_DIR})
+    add_dependencies(${GROUP_NAME}_Stubs ${GROUP_NAME}_generate_idl_files)
+
+    add_library(${GROUP_NAME}_Skeletons STATIC ${SERVER_GENERATED_SOURCES})
+    target_include_directories(${GROUP_NAME}_Skeletons PUBLIC ${IDL_OUTPUT_DIR})
+    add_dependencies(${GROUP_NAME}_Skeletons ${GROUP_NAME}_generate_idl_files)
+endfunction()
+
+# Beispiel: eine Gruppe registrieren
+generate_idl_group(Organization 
+                        "${CMAKE_SOURCE_DIR}/IDL/Basics.idl"
+                        "${CMAKE_SOURCE_DIR}/IDL/Organization.idl")
+
+generate_idl_group(Sensors 
+                        "${CMAKE_SOURCE_DIR}/IDL/Basics.idl"
+                        "${CMAKE_SOURCE_DIR}/IDL/Sensors.idl")

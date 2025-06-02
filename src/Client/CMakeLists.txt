@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include (../adecc_tao_settings.cmake)
 
-set(PROJECT_SOURCES Client.cpp)
+set(PROJECT_SOURCES Client.cpp Employee_Tools.h)
 					
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
 
@@ -21,7 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE IDL_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})
 
 
 

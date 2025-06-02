@@ -89,7 +89,7 @@ public:
 
    // IDL Attribute von Employee
    virtual CORBA::Double salary() override;
-   virtual Organization::YearMonthDay startDate() override;
+   virtual Basics::YearMonthDay startDate() override;
    virtual CORBA::Boolean isActive() override;
 
    /// \}

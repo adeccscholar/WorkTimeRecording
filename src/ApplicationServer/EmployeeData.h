@@ -24,6 +24,7 @@
   \note This software is part of the adecc Scholar project – Free educational materials for modern C++.
  */
 
+#include "BasicsC.h"
 #include "OrganizationC.h"
 
 #include <tao/ORB_Core.h>
@@ -60,7 +61,7 @@ struct EmployeeData : public PersonData {
    //std::string name                     = ""s;                  ///< Last name
    //Organization::EGender gender         = Organization::OTHER;  ///< Gender (as defined in IDL)
    double salary                        = 0.0;                  ///< Current salary (in company currency unit)
-   Organization::YearMonthDay startDate = { 0, 0, 0 };          ///< Start date in Year-Month-Day format
+   Basics::YearMonthDay startDate       = { 0, 0, 0 };          ///< Start date in Year-Month-Day format
    CORBA::Boolean isActive              = false;                ///< Employment status (active/inactive)
    };
 
