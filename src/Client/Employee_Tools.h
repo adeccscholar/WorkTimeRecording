@@ -81,15 +81,15 @@ inline std::string getTimeStamp(Organization::Company_ptr comp_in) {
  \throws std::runtime_error if the employee reference is nil.
  */
 inline void ShowEmployee(std::ostream& out, Organization::Employee_ptr employee) {
-   if (!CORBA::is_nil(employee)) {
-      CORBA::String_var fullName = employee->getFullName();
-      CORBA::Boolean active = employee->isActive();
+   //if (!CORBA::is_nil(employee)) [[likely]] {
+      //CORBA::String_var fullName = employee->getFullName();   // fullName.in()
+      //CORBA::Boolean active = employee->isActive();
       std::println(out, "ID: {:>4}, Name: {:<25}, Status: {:<3}, Salary: {:>10.2f}", employee->personId(),
-                         fullName.in(), (active ? "Yes" : "No"), employee->salary());
-      }
-   else {
-      throw std::runtime_error(std::format("[ShowEmployee: {}] ERROR: employee is nil unexpectedly.", ::getTimeStamp()));
-      }
+                         toString(employee->getFullName()), (employee->isActive() ? "Yes" : "No"), employee->salary());
+   //   }
+   //else {
+   //   throw std::runtime_error(std::format("[ShowEmployee: {}] ERROR: employee is nil unexpectedly.", ::getTimeStamp()));
+   //   }
    }
 
 /**
@@ -103,10 +103,10 @@ inline void ShowEmployee(std::ostream& out, Organization::Employee_ptr employee)
 inline void GetEmployee(Organization::Company_ptr comp_in, CORBA::Long seekId) {
    static const constinit std::string strScope = "GetEmployee()"s;
    log_trace<2>("[{} {}] Requesting employee with ID: {}", strScope, getTimeStamp(comp_in), seekId);
-   Organization::Employee_var employee_var = Organization::Employee::_nil(); // outside declared
+   //Organization::Employee_var employee_var = Organization::Employee::_nil(); // outside declared
    try {
       log_trace<3>("[{} {}]  Entering scope for Employee_var (ID: {}) ...", strScope, getTimeStamp(comp_in), seekId);
-      employee_var = comp_in->getEmployee(seekId);
+      auto employee_var = make_destroyable(comp_in->getEmployee(seekId));
       ShowEmployee(std::cout, employee_var.in());
       log_trace<3>("[{} {}] Leaving scope for Employee_var (ID: {}), Reference released.", strScope, getTimeStamp(comp_in), seekId);
       }
@@ -119,13 +119,16 @@ inline void GetEmployee(Organization::Company_ptr comp_in, CORBA::Long seekId) {
    catch (std::exception const& ex) {
       log_error("[{} {}] ERROR: C++ Exception during getEmployee({}): {}", strScope, getTimeStamp(comp_in), seekId, ex.what());
       }
+   catch(...) {
+      log_error("[{} {}] CRITICAL ERROR: unexpected Exception during getEmployee({})", strScope, getTimeStamp(comp_in), seekId);
+      }
 
    // HIER zerstören wir employee_var, so dass die Referenz auf dem Server freigegeben wird.
    // Server zerstört den transienten Servant.
-   if (!CORBA::is_nil(employee_var.in())) {
-      employee_var->destroy();
-      employee_var = Organization::Employee::_nil();
-      }
+   //if (!CORBA::is_nil(employee_var.in())) {
+   //   employee_var->destroy();
+   //   employee_var = Organization::Employee::_nil();
+   //   }
    }
 
 /**

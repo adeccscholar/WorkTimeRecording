@@ -71,13 +71,13 @@ int main(int argc, char *argv[]) {
    // Platzhalter für Variable
    log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
-      CORBAStubHolder<Organization::Company, Organization::Employee> test("Test", argc, argv, "Param1", "Param2");
+      //CORBAStubHolder<Organization::Company, Organization::Employee> test("Test", argc, argv, "Param1", "Param2");
       //*
       ORBClient<Organization::Company> orb("ORB + Company"s, argc, argv, "GlobalCorp/CompanyService"s);
       std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(orb.factory()->getTimeStamp())));
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", orb.factory()->nameCompany(), orb.factory()->getSumSalary());
       GetEmployee(orb.factory(), 105);
-      GetEmployees(orb.factory());
+      //GetEmployees(orb.factory());
       Organization::Employee_var employee = orb.factory()->getEmployee(180);
       //*/
 
@@ -106,6 +106,7 @@ int main(int argc, char *argv[]) {
       std::println(std::cout, "[{} {}] Successfully obtained reference to company {}.", strMainClient, ::getTimeStamp(), strName);
 
       // 4th using the company reference
+      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company_var->getTimeStamp())));
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", company_var->nameCompany(), company_var->getSumSalary());
 
       Organization::Employee_var employee = company_var->getEmployee(180);

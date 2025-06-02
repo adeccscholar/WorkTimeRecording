@@ -123,7 +123,7 @@ public:
   providing safe accessors to the ORB and factory interface.
  */
 template <CORBAStub corba_ty>
-class ORBClient : virtual ORBBase {
+class ORBClient : virtual public ORBBase {
    using corba_var_ty = typename corba_ty::_var_type;
 
    std::string                  strService     = ""s;
@@ -143,9 +143,6 @@ public:
 
       log_trace<2>("[{} {}] Resolving {}.", Name(), ::getTimeStamp(), strService);
       CORBA::Object_var factory_obj = naming_context()->resolve(name);
-
-      // CORBA::string_free(name[0].id);
-      // CORBA::string_free(name[0].kind);
 
       factory_ = typename corba_ty::_narrow(factory_obj.in());
       if (CORBA::is_nil(factory_.in())) throw std::runtime_error(std::format("Failed to narrow factory reference for {1:} in {0:}.", 
@@ -169,7 +166,7 @@ public:
 
 
 template <CORBAStub... Stubs>
-class CORBAStubHolder {
+class CORBAStubHolder : virtual public ORBBase {
 private:
    using VarTuple = std::tuple<typename Stubs::_var_type...>;
    static constexpr std::size_t NumStubs = sizeof...(Stubs);
@@ -178,16 +175,16 @@ private:
    VarTuple stubs_;
    NameArray names_;
 
-   std::string                  strClientName  = ""s;
-   CORBA::ORB_var               orb_           = nullptr;
-   CosNaming::NamingContext_var naming_context = nullptr;
 public:
    CORBAStubHolder() = delete;
 
    // Variadic Konstruktor: erwartet genau so viele std::string wie Stubs
    template <typename... Names> requires (sizeof...(Names) == NumStubs) && (std::is_convertible_v<Names, std::string> && ...)
-   CORBAStubHolder(std::string const& paClientName, int argc, char* argv[], Names&&... names) : 
-      strClientName { paClientName }, names_{ { std::forward<Names>(names)... } } {
+   CORBAStubHolder(std::string const& paClientName, int argc, char* argv[], Names&&... names) : ORBBase(paClientName, argc, argv),
+      names_{ { std::forward<Names>(names)... } } {
+      for(auto const& name : names_) {
+
+         }
       }
 
    VarTuple& vars() { return stubs_; }
@@ -214,7 +211,11 @@ class Destroyable_Var {
 public:
    using ptr_type       = typename corba_ty*;
    using const_ptr_type = typename const corba_ty*;
-   using var_type       = TAO_Objref_Var_T<corba_ty>;
+   using var_type       = typename corba_ty::_var_type; // TAO_Objref_Var_T<corba_ty>;
+
+private:
+   var_type var_;
+public:
 
    explicit Destroyable_Var(corba_ty* ptr) { var_ = ptr; }
 
@@ -254,11 +255,10 @@ private:
          catch (...) {
             // Fehlerbehandlung optional, auf jeden Fall loggen
             }
-         var_ = nullptr;
+         var_ = typename corba_ty::_nil();
          }
       }
 
-   var_type var_;
 };
 
 /**
