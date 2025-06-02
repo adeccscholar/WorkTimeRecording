@@ -1,4 +1,39 @@
-﻿
+﻿// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+  \file
+  \brief Client application for employee self-service access to personal data.
+
+  \details
+  This module implements the CORBA-based client used by employees to view and
+  interact with their own time tracking and organizational data. It connects to
+  the appropriate CORBA services via the TAO ORB and performs secure, read-only
+  access to individual records as published by the Application Server.
+
+  \note
+  This software component is part of the adecc Scholar project and is designed
+  for educational and productive use in distributed, service-based C++ systems.
+
+  \author Volker Hillmann (adecc Systemhaus GmbH)
+
+  \copyright Copyright © adecc Systemhaus GmbH 2021–2025
+
+  \license This program is free software: you can redistribute it and/or modify it
+           under the terms of the GNU General Public License, version 3,
+           as published by the Free Software Foundation.
+
+           This program is distributed in the hope that it will be useful,
+           but WITHOUT ANY WARRANTY; without even the implied warranty of
+           MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+           See the GNU General Public License for more details.
+
+           You should have received a copy of the GNU General Public License
+           along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+  \version 1.0
+  \date 2025-05-26
+ */
 #include "Tools.h"
 #include "my_logging.h"
 #include "Corba_Interfaces.h"

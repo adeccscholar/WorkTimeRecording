@@ -146,6 +146,14 @@
 */
 
 /**
+  \dir src/Client
+  \brief Contains the Source files for the Client Application for enterprise use
+  \details This directory contains all source files for the Client application which is used for
+           employees to see own data and informations.
+  \details The target platform for this application is Windows and Linux.
+*/
+
+/**
   \dir src/RaspberryTerminal
   \brief Contains the Source files for the Raspberry PI Terminal Application
   \details This directory contains all source files for the Raspberry PI Application with the RFID
