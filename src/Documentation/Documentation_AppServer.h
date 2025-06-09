@@ -11,7 +11,7 @@
  
 /**
  \page appserver CORBA Application Server – Overview
-
+ \brief Overview page for implementation of an corba application server
  \section appserver_intro Introduction
 
  The CORBA Application Server is a core component of the distributed enterprise time-tracking system based on CORBA
@@ -78,7 +78,7 @@
 
 /**
   \page app_lifecycle Application Lifecycle
-  \@brief Detailed breakdown of the server application's runtime behavior.
+  \brief Detailed breakdown of the server application's runtime behavior.
  
   This document describes the control flow of the server, including CORBA setup, POA configuration,
   servant creation, and shutdown handling.
@@ -128,4 +128,157 @@
  
   ### 14. ORB Destruction
   - Finally, the ORB is destroyed to free all resources.
+  
+  # Sourcecode
+  
+Full Source of the first version with complete workcycle.  
+  
+\code{.cpp}
+   int main(int argc, char *argv[]) {
+      // (1) Setup: Install signal handlers for graceful shutdown on SIGINT or SIGTERM
+      signal(SIGINT, signal_handler);
+      signal(SIGTERM, signal_handler);
+
+      const std::string strAppl = "Time Tracking App Server"s;
+   #ifdef _WIN32
+      SetConsoleOutputCP(CP_UTF8);  
+   #endif
+
+      // (2) Initialize global CORBA ORB
+      std::println("[{} {}] Server starting ...", strAppl, ::getTimeStamp());
+      CORBA::ORB_var orb_global = CORBA::ORB_init(argc, argv);
+      try {
+         if (CORBA::is_nil(orb_global.in())) throw std::runtime_error("Failed to initialized the global ORB Object.");
+         std::println("[{} {}] Corba is intialized.", strAppl, ::getTimeStamp());
+
+         // (3) Obtain RootPOA and activate POA Manager
+         CORBA::Object_var poa_object = orb_global->resolve_initial_references("RootPOA");
+         PortableServer::POA_var root_poa = PortableServer::POA::_narrow(poa_object.in());
+         if (CORBA::is_nil(root_poa.in())) throw std::runtime_error("Failed to narrow the POA");
+
+         PortableServer::POAManager_var poa_manager = root_poa->the_POAManager();
+         poa_manager->activate();
+         std::println("[{} {}] RootPOA obtained and POAManager is activated.", strAppl, ::getTimeStamp());
+
+         // (4) Create policies for POAs
+         CORBA::PolicyList comp_pol;
+         comp_pol.length(1);
+         comp_pol[0] = root_poa->create_lifespan_policy(PortableServer::PERSISTENT);
+
+         CORBA::PolicyList empl_pol;
+         empl_pol.length(2);
+         empl_pol[0] = root_poa->create_lifespan_policy(PortableServer::TRANSIENT);
+         empl_pol[1] = root_poa->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
+
+         // (5) Create Child POAs
+         PortableServer::POA_var company_poa  = root_poa->create_POA("CompanyPOA", poa_manager.in(), comp_pol);
+         PortableServer::POA_var employee_poa = root_poa->create_POA("EmployeePOA", poa_manager.in(), empl_pol);
+
+         for (uint32_t i = 0; i < comp_pol.length(); ++i) comp_pol[i]->destroy();
+         for (uint32_t i = 0; i < empl_pol.length(); ++i) empl_pol[i]->destroy();
+
+         std::println("[{} {}] Persistent CompanyPOA and transient EmployeePOA created.", strAppl, ::getTimeStamp());
+
+         // (6) Create and activate the Company servant
+         Company_i* company_servant = new Company_i(company_poa.in(), employee_poa.in());
+         PortableServer::ObjectId_var company_oid = company_poa->activate_object(company_servant);
+
+         CORBA::Object_var obj_ref = company_poa->id_to_reference(company_oid.in());
+         Organization::Company_var company_ref = Organization::Company::_narrow(obj_ref.in());
+         if (CORBA::is_nil(company_ref)) {
+            throw std::runtime_error(std::format("CORBA Error while narrowing Reference."));
+            }
+         std::println("[{} {}] Company servant activate under CompanyPOA.", strAppl, ::getTimeStamp());
+
+         // (7) Bind to Naming Service
+         CORBA::Object_var naming_obj = orb_global->resolve_initial_references("NameService");
+         CosNaming::NamingContext_var naming_context = CosNaming::NamingContext::_narrow(naming_obj.in());
+         if (CORBA::is_nil(naming_context)) throw std::runtime_error("Failed to narrow naming context.");
+
+         std::string strName = "GlobalCorp/CompanyService"s;
+         CosNaming::Name name;
+         name.length(1);
+         name[0].id = CORBA::string_dup(strName.c_str());
+         name[0].kind = CORBA::string_dup("Object");
+
+         naming_context->rebind(name, company_ref.in());
+         std::println("[{} {}] Company servant registered with nameservice as {}.", strAppl, ::getTimeStamp(), strName);
+
+         // (8) Start ORB event loop in a separate thread
+         std::thread orb_thread([&]() {
+            std::string strOrb = "ORB Thread"s;
+            try {
+               orb_global->run();
+               std::println("   [{} {}] orb->run() finished.", strAppl, ::getTimeStamp());
+               }
+            catch(CORBA::Exception const& ex) {
+               std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), toString(ex));
+               }
+            catch (std::exception const& ex) {
+               std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), ex.what());
+               }
+            catch (...) {
+               std::println(std::cerr, "  [{} {}], unknown Exception in orb->run()", strOrb, ::getTimeStamp());
+               }
+            } );
+
+         // (9) Wait for shutdown signal
+         std::println("[{} {}] Server is ready. <Waiting for shutdown signal (e.g. Cntrl+C) ...", strAppl, ::getTimeStamp());
+         while (!shutdown_requested) { 
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));  
+            }
+
+         // (10) Cleanup: unbind nameservice
+         std::println("[{} {}] Unbinding from nameservice ...", strAppl, ::getTimeStamp());
+         try {
+            naming_context->unbind(name);
+            }
+         catch(CORBA::Exception const& ex) {
+            std::println(std::cerr, "[{} {}] Error unbinding from nameservice: {}", strAppl, ::getTimeStamp(), toString(ex));
+            }
+
+         // (11) Cleanup: deactivate servant
+         std::println("[{} {}] Deactivate servant and remove refcount()...", strAppl, ::getTimeStamp());
+         company_poa->deactivate_object(company_oid);
+         company_servant->_remove_ref();
+
+         // (12) Shutdown ORB
+         std::println("[{} {}] Shutdown requested, calling orb->shutdown(false)...", strAppl, ::getTimeStamp());
+         orb_global->shutdown(true);
+
+         if (orb_thread.joinable()) orb_thread.join();
+
+         // (13) Destroy POAs
+         std::println("[{} {}] Destroying POAs ...", strAppl, ::getTimeStamp());
+         employee_poa->destroy(true, true);
+         company_poa->destroy(true, true);
+         root_poa->destroy(true, true);
+         std::println("[{} {}] POAs destroyed.", strAppl, ::getTimeStamp());
+         }
+      catch(CORBA::Exception const& ex) {
+         std::println(std::cerr, "[{} {}] CORBA Exception caught: {}", strAppl, ::getTimeStamp(), toString(ex));
+         }
+      catch(std::exception const& ex) {
+         std::println(std::cerr, "[{} {}] std::exception caught: {}", strAppl, ::getTimeStamp(), ex.what());
+         }
+      catch (...) {
+         std::println(std::cerr, "[{} {}] Unknown exception caught.", strAppl, ::getTimeStamp());
+         }
+
+      // (14) Destroy ORB
+      if(!CORBA::is_nil(orb_global.in())) {
+         try {
+            std::println(std::cout, "[{} {}] Destroying ORB ...", strAppl, ::getTimeStamp());
+            orb_global->destroy();
+            std::println(std::cout, "[{} {}] ORB destroyed.", strAppl, ::getTimeStamp());
+            }
+         catch(CORBA::Exception const& ex) {
+            std::println(std::cerr, "[{} {}] Exception destroying ORB: {}", strAppl, ::getTimeStamp(), toString(ex));
+            }
+         }
+      std::println(std::cout, "[{} {}] Server exited successfully.", strAppl, ::getTimeStamp());
+      return 0;
+      }
+\endcode
+  
  */

@@ -996,7 +996,8 @@ INPUT                  = src \
                          adecc_Tools \
                          adecc_Scholar \
                          IDL \
-                         Documentation
+                         Documentation \
+                         src\out\build\x64-release\IDLGen\idl
 
 # This tag can be used to specify the character encoding of the source files
 # that Doxygen parses. Internally Doxygen uses the UTF-8 encoding. Doxygen uses

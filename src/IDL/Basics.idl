@@ -44,4 +44,16 @@ module Basics {
       short month; ///< Month [1–12]
       short day;   ///< Day [1–31]
       };
+
+   /**
+     \brief Interface for all servants which can be delete from client
+    */
+   interface DestroyableInterface {
+      /**
+        \brief Destroys this object on the server side.
+        \details Base class for interfaces with an destroy method for transient
+                 Objects on the server
+      */
+      void destroy();
+   };
 };

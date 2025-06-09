@@ -3,7 +3,7 @@
 
 /**
   \file
-  \brief Header-only CORBA client utility templates with RAII management for CORBA interfaces
+  \brief Header-only CORBA client utility templates with RAII management for CORBA interfaces and concepts
 
   \details This header provides generic, reusable C++20 template utilities for working with CORBA stubs in the
            distributed time-tracking system developed as part of the **adecc Scholar** project. The templates
@@ -44,7 +44,10 @@
 #include "Corba_Nameservice.h"
 
 #include "tao/Object.h"
+#include <tao/PortableServer/Servant_Base.h>
+
 #include <orbsvcs/CosNamingC.h>
+
 
 #include <concepts>
 #include <vector>
@@ -70,7 +73,22 @@ template<typename ty>
 concept CORBAStubWithDestroy = CORBAStub<ty> && 
    requires(ty& t) {
          { t.destroy() } -> std::same_as<void>;
-      };
+   };
+
+
+template<typename ty>
+concept CORBASkeleton = std::derived_from<ty, PortableServer::ServantBase> &&
+     requires(ty t, TAO_ServerRequest& req, TAO::Portable_Server::Servant_Upcall* upcall) {
+     typename ty::_stub_type;
+     typename ty::_stub_ptr_type;
+     typename ty::_stub_var_type;
+
+     { t._this() } -> std::same_as<typename ty::_stub_ptr_type>;
+     { t._interface_repository_id() } -> std::same_as<const char*>;
+     { t._dispatch(req, upcall) };
+     { t._is_a("IDL:some/interface:1.0") } -> std::convertible_to<::CORBA::Boolean>;
+   };
+
 
 
 class ORBBase {
@@ -93,10 +111,17 @@ public:
       }
 
    ~ORBBase() {
-      while (orb_->work_pending()) orb_->perform_work();
-      orb_->destroy();
-      log_trace<2>("[{} {}] ORB destroyed.", strName, ::getTimeStamp());
-   }
+      if (!CORBA::is_nil(orb_.in())) {
+         while (orb_->work_pending()) orb_->perform_work();
+         try {
+            orb_->destroy();
+            log_trace<2>("[{} {}] ORB destroyed.", strName, ::getTimeStamp());
+            }
+         catch (CORBA::Exception const& ex) {
+            log_error("[{} {}] CORBA Exception caught while destroying ORB: {}", strName, ::getTimeStamp(), toString(ex));
+            }
+         }
+      }
 
    ORBBase(ORBBase const&) = delete;
    ORBBase& operator = (ORBBase const&) = delete;
@@ -107,7 +132,15 @@ public:
    CORBA::ORB* orb() const { return orb_.in(); }
 
    CosNaming::NamingContext_ptr naming_context() { return naming_context_.in(); }
+
+   std::vector<std::string> get_names() { return get_all_names(naming_context()); }
 };
+
+
+template <CORBASkeleton corba_skel_ty>
+class CorbaServer : virtual public ORBBase {
+
+   };
 
 /**
   \brief Generic CORBA client helper to initialize ORB and resolve a service stub via Naming Service.
@@ -132,10 +165,6 @@ public:
    ORBClient() = delete;
    ORBClient(std::string const& paName, int argc, char* argv[], std::string const& paService) : ORBBase(paName, argc, argv), 
                  strService { paService }  {
-      // test
-      auto overview = get_all_names(naming_context());
-      for (auto const& id_name : overview) std::println(std::cout, "{}", id_name);
-
       CosNaming::Name_var name = new CosNaming::Name;
       name->length(1);
       name[0].id   = CORBA::string_dup(strService.c_str());
@@ -155,13 +184,14 @@ public:
    ~ORBClient() {
       }
 
+
    ORBClient(ORBClient const&) = delete;
    ORBClient& operator = (ORBClient const&) = delete;
 
    CORBA::ORB_ptr orb() { return orb_.in();  }
    CORBA::ORB* orb() const { return orb_.in(); }
 
-   corba_ty* factory() { return factory_.in(); }
+   corba_ty* operator() () { return factory_.in(); }
    };
 
 
@@ -175,16 +205,58 @@ private:
    VarTuple stubs_;
    NameArray names_;
 
+   template <std::size_t... Is>
+   void resolve_all(std::index_sequence<Is...>) { ( ..., resolve_single<Is>() ); }
+   
+   template <std::size_t I>  
+   void resolve_single() {
+      using VarType = std::tuple_element_t<I, VarTuple>;
+      using StubInterface = typename VarType::_obj_type;
+
+      auto const& strService = names_[I];
+
+      CosNaming::Name_var name = new CosNaming::Name;
+      name->length(1);
+      name[0].id = CORBA::string_dup(strService.c_str());
+      name[0].kind = CORBA::string_dup("Object");
+
+      log_trace<2>("[{} {}] Resolving {}.", Name(), ::getTimeStamp(), strService);
+      CORBA::Object_var factory_obj = naming_context()->resolve(name);
+
+      auto stub = StubInterface::_narrow(factory_obj.in());
+      if (CORBA::is_nil(stub)) {
+         throw std::runtime_error(std::format("Failed to narrow factory reference for {1:} in {0:}.", Name(), strService));
+         }
+      std::get<I>(stubs_) = stub;
+      log_trace<2>("[{} {}] Successfully obtained reference for {}.", Name(), ::getTimeStamp(), strService);
+      }
+ 
+   template <std::size_t... Is>
+   void release_all(std::index_sequence<Is...>) { (..., release_single<Is>()); }
+
+   template <std::size_t I>
+   void release_single() {
+      std::get<I>(stubs_) = std::tuple_element_t<I, VarTuple>::_obj_type::_nil();
+      log_trace<2>("[{} {}] Successfully released reference for {} .", Name(), ::getTimeStamp(), names_[I]);
+      }
+
 public:
    CORBAStubHolder() = delete;
 
-   // Variadic Konstruktor: erwartet genau so viele std::string wie Stubs
-   template <typename... Names> requires (sizeof...(Names) == NumStubs) && (std::is_convertible_v<Names, std::string> && ...)
+   // Variadic Konstruktor: erwartet genau so viele Argumente vom Type std::string wie Stubs vorhanden sind
+   template<typename... Names> requires (sizeof...(Names) == NumStubs) && (std::is_convertible_v<Names, std::string> && ...)
    CORBAStubHolder(std::string const& paClientName, int argc, char* argv[], Names&&... names) : ORBBase(paClientName, argc, argv),
-      names_{ { std::forward<Names>(names)... } } {
-      for(auto const& name : names_) {
+            names_ { { std::forward<Names>(names)... } } {
+      resolve_all(std::make_index_sequence<NumStubs>{});
+      log_trace<2>("[{} {}] All references obtained successfully.", Name(), ::getTimeStamp());
+      }
 
-         }
+   CORBAStubHolder(CORBAStubHolder const&) = delete;
+   CORBAStubHolder& operator = (CORBAStubHolder const&) = delete;
+
+   ~CORBAStubHolder() { 
+      release_all(std::make_index_sequence<NumStubs>{});  
+      log_trace<2>("[{} {}] All references released successfully.", Name(), ::getTimeStamp());
       }
 
    VarTuple& vars() { return stubs_; }
@@ -217,6 +289,7 @@ private:
    var_type var_;
 public:
 
+   Destroyable_Var() { var_ = typename corba_ty::_nil(); }
    explicit Destroyable_Var(corba_ty* ptr) { var_ = ptr; }
 
    Destroyable_Var(Destroyable_Var const&) = delete;

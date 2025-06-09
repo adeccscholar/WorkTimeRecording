@@ -10,6 +10,7 @@ include (../adecc_tao_settings.cmake)
 
 set(PROJECT_SOURCES AppServer.cpp
                     EmployeeData.h
+                    Basics_i.cpp Basics_i.h
                     Employee_i.cpp Employee_i.h
                     Company_i.cpp Company_i.h)
 					

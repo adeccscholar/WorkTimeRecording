@@ -195,6 +195,15 @@ inline Basics::TimePoint converTo(std::chrono::time_point<std::chrono::system_cl
    return tp;
    }
 
+/**
+ \brief Converts a Basics::TimePoint to a formatted string.
+
+ \param tp The CORBA TimePoint to convert.
+ \return A human-readable timestamp string.
+ */
+inline std::string toString(Basics::TimePoint tp) {
+   return getTimeStamp(convertTo(tp));
+   }
 
 /**
    \brief Converts a raw CORBA string (char*) to a std::string and frees the allocated memory.

@@ -73,27 +73,46 @@ module Organization {
 
    /**
      \brief CORBA interface representing a single employee.
+     \details Read-only attributes for simplicity in this example
+     \note In the first version without an inheritance between Person and Employee.
+   */
+   interface Person : Basics::DestroyableInterface {
+      /**
+        \name Attributes and functions which part of person representation
+        \{
+      */
+      readonly attribute long   personId;          ///< Unique person ID
+      readonly attribute string firstName;         ///< First name of the person
+      readonly attribute string name;              ///< Last name (surname) of the person
+      readonly attribute EGender gender;           ///< Gender of the employee
+
+      /**
+       \brief Returns the full name (first + last name) of the person.
+       \return Concatenated name corba string.
+      */
+      string getFullName();
+
+      /// \}
+
+      /**
+      \brief Destroys this object on the server side.
+      */
+      // void destroy();
+      };
+
+   /**
+     \brief A sequence (list) of Person objects.
+   */
+   typedef sequence<Person> PersonSeq;
+
+   /**
+     \brief CORBA interface representing a single employee.
+     \details The Employee is a Organization::Person, for the second version of this class
 	  \details Read-only attributes for simplicity in this example 
 	  \note In the first version without an inheritance between Person and Employee.
+     \see Basics::DestroyableInterface
    */
-	interface Employee {
-	     
-	     /** 
-          \name Attributes and functions which part of person representation
-		    \{
-	     */
-        readonly attribute long   personId;          ///< Unique person ID
-        readonly attribute string firstName;         ///< First name of the person
-        readonly attribute string name;              ///< Last name (surname) of the person
-        readonly attribute EGender gender;           ///< Gender of the employee
-
-        /**
-         \brief Returns the full name (first + last name) of the person.
-         \return Concatenated name corba string.
-        */
-        string getFullName();
-		
-		  /// \}
+	interface Employee : Person {
 
 	     /** 
           \name Attributes and functions which part of employee representation
@@ -105,10 +124,6 @@ module Organization {
 		
 		/// \}
 		
-	    /**
-         \brief Destroys this object on the server side.
-        */	
-		void destroy();
     };
 
     /**

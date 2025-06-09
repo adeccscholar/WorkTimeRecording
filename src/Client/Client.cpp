@@ -71,15 +71,22 @@ int main(int argc, char *argv[]) {
    // Platzhalter für Variable
    log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
-      //CORBAStubHolder<Organization::Company, Organization::Employee> test("Test", argc, argv, "Param1", "Param2");
-      //*
-      ORBClient<Organization::Company> orb("ORB + Company"s, argc, argv, "GlobalCorp/CompanyService"s);
-      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(orb.factory()->getTimeStamp())));
-      std::println(std::cout, "Company {}, to paid salaries {:.2f}", orb.factory()->nameCompany(), orb.factory()->getSumSalary());
-      GetEmployee(orb.factory(), 105);
-      //GetEmployees(orb.factory());
-      Organization::Employee_var employee = orb.factory()->getEmployee(180);
-      //*/
+      CORBAStubHolder<Organization::Company> test("Test", argc, argv, "GlobalCorp/CompanyService"s);
+      auto company = [&test]() { return std::get<0>(test.vars());  };
+      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
+      std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
+      GetEmployee(company(), 105);
+      GetEmployees(company());
+      Organization::Employee_var employee = company()->getEmployee(180);
+
+      /*
+      ORBClient<Organization::Company> company("ORB + Company"s, argc, argv, "GlobalCorp/CompanyService"s);
+      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
+      std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
+      GetEmployee(company(), 105);
+      GetEmployees(company());
+      Organization::Employee_var employee = company()->getEmployee(180);
+      */
 
       /*
       // 1st ORB initialisieren

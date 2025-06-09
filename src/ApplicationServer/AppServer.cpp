@@ -44,6 +44,7 @@
 #include "OrganizationC.h"
 
 #include "Company_i.h"
+#include "Corba_Interfaces.h"
 
 #include <tao/corba.h>
 #include <tao/PortableServer/PortableServer.h>
@@ -111,6 +112,8 @@ void signal_handler(int sig_num) {
    shutdown_requested = true;
    }
 
+static_assert(CORBASkeleton<Company_i>, "Company_i erfüllt nicht das CORBASkeleton-Concept");
+
 int main(int argc, char *argv[]) {
 
    // -----------------------------------------------------------------------------------
@@ -175,8 +178,8 @@ int main(int argc, char *argv[]) {
       PortableServer::POA_var company_poa  = root_poa->create_POA("CompanyPOA", poa_manager.in(), comp_pol);
       PortableServer::POA_var employee_poa = root_poa->create_POA("EmployeePOA", poa_manager.in(), empl_pol);
 
-      for (uint32_t i = 0; i < 1; ++i) comp_pol[i]->destroy();
-      for (uint32_t i = 0; i < 2; ++i) empl_pol[i]->destroy();
+      for (uint32_t i = 0; i < comp_pol.length(); ++i) comp_pol[i]->destroy();
+      for (uint32_t i = 0; i < empl_pol.length(); ++i) empl_pol[i]->destroy();
 
       std::println("[{} {}] Persistent CompanyPOA and transient EmployeePOA created.", strAppl, ::getTimeStamp());
 

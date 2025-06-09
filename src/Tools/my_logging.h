@@ -27,7 +27,7 @@
 
 
 /// \brief Controls verbosity of \ref log_trace output.
-const constinit int TraceLevel = 4;
+const constinit int TraceLevel = 5;
 
 /**
   \brief Logs a message to `std::cout` using format syntax.
