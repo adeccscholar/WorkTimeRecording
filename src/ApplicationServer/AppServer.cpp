@@ -126,187 +126,39 @@ int main(int argc, char *argv[]) {
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);  
 #endif
-
-   // ------------------------------------------------------------------------------------
-   // (2) Initialize global CORBA ORB (Object Request Broker)
-   // Note: The parameters will be assimilated (ownership is transferred).
-   // ------------------------------------------------------------------------------------
-   std::println("[{} {}] Server starting ...", strAppl, ::getTimeStamp());
-   CORBA::ORB_var orb_global = CORBA::ORB_init(argc, argv);
+   std::string strName = "GlobalCorp/CompanyService"s;
    try {
-      if (CORBA::is_nil(orb_global.in())) throw std::runtime_error("Failed to initialized the global ORB Object.");
-      std::println("[{} {}] Corba is intialized.", strAppl, ::getTimeStamp());
+      CorbaServer<Company_i> server(strAppl, argc, argv);
 
-      // ----------------------------------------------------------------------------------
-      // (3) Obtain the RootPOA and activate its POA Manager (Portable Object Adapter)
-      // ----------------------------------------------------------------------------------
-      
-      CORBA::Object_var poa_object = orb_global->resolve_initial_references("RootPOA");
-      PortableServer::POA_var root_poa = PortableServer::POA::_narrow(poa_object.in());
-      if (CORBA::is_nil(root_poa.in())) throw std::runtime_error("Failed to narrow the POA");
-
-      PortableServer::POAManager_var poa_manager = root_poa->the_POAManager();
-      poa_manager->activate();
-      std::println("[{} {}] RootPOA obtained and POAManager is activated.", strAppl, ::getTimeStamp());
-
-      // -------------------------------------------------------------------------------------------------------
-      // (4) Create policies for both POAs (persistent, transient)
-      // -------------------------------------------------------------------------------------------------------
-      
-      // Policy for the persistent POA (for Company / Organization)
-      // PERSISTENT: Object references are independent of a single ORB runtime 
-      // - they can refer to the same servant again later (after a restart) (impl.repository or mapping required).
-      // Long - term services, “always - on” components, enterprise architectures with restart / failover.
-      // IOR Length: approx. 250 - 400 bytes, depending on the length of the adapter and repository name.
-      CORBA::PolicyList comp_pol;
-      comp_pol.length(1);
-      comp_pol[0] = root_poa->create_lifespan_policy(PortableServer::PERSISTENT);
-
-      // Policy for the transient POA (for Employee)
-      // TRANSIENT: Object references are only valid for the duration of the ORB instance. 
-      // Server restart → References invalid
-      // Short-lived objects, in-memory services
-      // IOR Length: approx. 200  - 250 Bytes
       CORBA::PolicyList empl_pol;
       empl_pol.length(2);
-      empl_pol[0] = root_poa->create_lifespan_policy(PortableServer::TRANSIENT);
-      empl_pol[1] = root_poa->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
+      empl_pol[0] = server.root_poa()->create_lifespan_policy(PortableServer::TRANSIENT);
+      empl_pol[1] = server.root_poa()->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
 
-      // -------------------------------------------------------------------------------------------------------
-      // (5) Create both Child POAs with the configured polices
-      // -------------------------------------------------------------------------------------------------------
-      PortableServer::POA_var company_poa  = root_poa->create_POA("CompanyPOA", poa_manager.in(), comp_pol);
-      PortableServer::POA_var employee_poa = root_poa->create_POA("EmployeePOA", poa_manager.in(), empl_pol);
-
-      for (uint32_t i = 0; i < comp_pol.length(); ++i) comp_pol[i]->destroy();
+      PortableServer::POA_var employee_poa = server.root_poa()->create_POA("EmployeePOA", server.poa_manager(), empl_pol);
       for (uint32_t i = 0; i < empl_pol.length(); ++i) empl_pol[i]->destroy();
 
-      std::println("[{} {}] Persistent CompanyPOA and transient EmployeePOA created.", strAppl, ::getTimeStamp());
+      server.RegisterServant(strName, [poa = std::move(employee_poa)]() mutable {
+                                         if(!CORBA::is_nil(poa.in())) {
+                                            poa->destroy(true, true);
+                                            log_trace<2>("[independent Lambda Fuction {}] Employee POA destroyed.", ::getTimeStamp());
+                                            }
+                                         }, 
+                             new Company_i(server.servant_poa(), employee_poa.in()));
 
-      // -------------------------------------------------------------------------------------------------------
-      // (6) Create and activate the Company servant object
-      // -------------------------------------------------------------------------------------------------------
-      // the live time is depentend of the orb and poa, but I know the live time of servant
-      // auto company_servant = std::make_unique<Company_i>(company_poa.in(), employee_poa.in());
-      Company_i* company_servant = new Company_i(company_poa.in(), employee_poa.in());
-      PortableServer::ObjectId_var company_oid = company_poa->activate_object(company_servant);
-
-      CORBA::Object_var obj_ref = company_poa->id_to_reference(company_oid.in());
-      Organization::Company_var company_ref = Organization::Company::_narrow(obj_ref.in());
-      if (CORBA::is_nil(company_ref)) {
-         throw std::runtime_error(std::format("CORBA Error while narrowing Reference."));
-         }
-      std::println("[{} {}] Company servant activate under CompanyPOA.", strAppl, ::getTimeStamp());
-
-      // --------------------------------------------------------------------------------
-      // (7) Bind the Company servant to the CORBA Naming Service
-      // --------------------------------------------------------------------------------
-      CORBA::Object_var naming_obj = orb_global->resolve_initial_references("NameService");
-      CosNaming::NamingContext_var naming_context = CosNaming::NamingContext::_narrow(naming_obj.in());
-      if (CORBA::is_nil(naming_context)) throw std::runtime_error("Failed to narrow naming context.");
-
-      std::string strName = "GlobalCorp/CompanyService"s;
-      CosNaming::Name name;
-      name.length(1);
-      name[0].id = CORBA::string_dup(strName.c_str());
-      name[0].kind = CORBA::string_dup("Object");
-
-      naming_context->rebind(name, company_ref.in());
-      std::println("[{} {}] Company servant registered with nameservice as {}.", strAppl, ::getTimeStamp(), strName);
-
-      // ---------------------------------------------------------------------------------
-      // (8) Launch the ORB event loop in a separate thread
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Starting ORB event loop in separate thread ...", strAppl, ::getTimeStamp());
-
-
-      std::thread orb_thread([&]() {
-          std::string strOrb = "ORB Thread"s;
-          try {
-             orb_global->run();
-             std::println("   [{} {}] orb->run() finished.", strAppl, ::getTimeStamp());
-             }
-          catch(CORBA::Exception const& ex) {
-             std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), toString(ex));
-             }
-          catch (std::exception const& ex) {
-             std::println(std::cerr, "  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), ex.what());
-             }
-          catch (...) {
-             std::println(std::cerr, "  [{} {}], unknown Exception in orb->run()", strOrb, ::getTimeStamp());
-             }
-         } );
-      // ---------------------------------------------------------------------------------
-      // (9) Wait for shutdown signal in main thread (soft closing)
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Server is ready. <Waiting for shutdown signal (e.g. Cntrl+C) ...", strAppl, ::getTimeStamp());
-      while (!shutdown_requested) { 
-         std::this_thread::sleep_for(std::chrono::milliseconds(200));  
-         }
-
-      // ---------------------------------------------------------------------------------
-      // (10) Cleanup: unbind nameservices
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Unbinding from nameservice ...", strAppl, ::getTimeStamp());
-      try {
-         naming_context->unbind(name);
-         }
-      catch(CORBA::Exception const& ex) {
-         std::println(std::cerr, "[{} {}] Error unbinding from nameservice (maybe already gone): {}", strAppl, ::getTimeStamp(), toString(ex));
-         }
-
-      // ---------------------------------------------------------------------------------
-      // (11) Cleanup: deactivate servant and set refcount - 1
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Deactivate servant and remove refcount()...", strAppl, ::getTimeStamp());
-      company_poa->deactivate_object(company_oid);
-      company_servant->_remove_ref();
-
-      // ---------------------------------------------------------------------------------
-      // (12) Shhutdown orb and stop event processing
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Shutdown requested, calling orb->shutdown(false)...", strAppl, ::getTimeStamp());
-      orb_global->shutdown(true);
-
-      if (orb_thread.joinable()) orb_thread.join();
-
-      // ---------------------------------------------------------------------------------
-      // (13) Destroying POAs (first children, later the root)
-      // wait for running requests, clear object
-      // ---------------------------------------------------------------------------------
-      std::println("[{} {}] Destroying POAs ...", strAppl, ::getTimeStamp());
-      employee_poa->destroy(true, true);
-      company_poa->destroy(true, true);
-
-      root_poa->destroy(true, true);
-      std::println("[{} {}] POAs destroyed.", strAppl, ::getTimeStamp());
-
+      server.run(shutdown_requested);
       }
-   catch(CORBA::Exception const& ex) {
-      std::println(std::cerr, "[{} {}] CORBA Exception caught: {}", strAppl, ::getTimeStamp(), toString(ex));
+   catch (CORBA::Exception const& ex) {
+      log_error("[{} {}] CORBA Exception caught: {}", strAppl, ::getTimeStamp(), toString(ex));
       }
-   catch(std::exception const& ex) {
-      std::println(std::cerr, "[{} {}] std::exception caught: {}", strAppl, ::getTimeStamp(), ex.what());
+   catch (std::exception const& ex) {
+      log_error("[{} {}] std::exception caught: {}", strAppl, ::getTimeStamp(), ex.what());
       }
    catch (...) {
-      std::println(std::cerr, "[{} {}] Unknown exception caught.", strAppl, ::getTimeStamp());
+      log_error("[{} {}] Unknown exception caught.", strAppl, ::getTimeStamp());
       return 1;
       }
 
-   // ------------------------------------------------------------------------------------
-   // (13) Destroying ORB 
-   // ------------------------------------------------------------------------------------
-
-   if(!CORBA::is_nil(orb_global.in())) {
-      try {
-         std::println(std::cout, "[{} {}] Destroying ORB ...", strAppl, ::getTimeStamp());
-         orb_global->destroy();
-         std::println(std::cout, "[{} {}] ORB destroyed.", strAppl, ::getTimeStamp());
-         }
-      catch(CORBA::Exception const& ex) {
-         std::println(std::cerr, "[{} {}] CORBA Exception caught while destroying ORB: {}", strAppl, ::getTimeStamp(), toString(ex));
-         }
-      }
-   std::println(std::cout, "[{} {}] Server exited successfully.", strAppl, ::getTimeStamp());
+   log_state("[{} {}] Server exited successfully.", strAppl, ::getTimeStamp());
    return 0;
    }

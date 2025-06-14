@@ -37,8 +37,7 @@
 #include <algorithm>
 
 Company_i::Company_i(PortableServer::POA_ptr company_poa, PortableServer::POA_ptr employee_poa)
-   : employee_poa_(PortableServer::POA::_duplicate(employee_poa)),
-     company_poa_(PortableServer::POA::_duplicate(company_poa)) {
+   : employee_poa_(PortableServer::POA::_duplicate(employee_poa)), company_poa_(PortableServer::POA::_duplicate(company_poa)) {
    initializeDatabase();
    log_trace<4>("[Company_i {}] Company Servant {} created", ::getTimeStamp(), strCompanyName);
    }
@@ -46,6 +45,7 @@ Company_i::Company_i(PortableServer::POA_ptr company_poa, PortableServer::POA_pt
 Company_i::~Company_i() {
    log_trace<4>("[Company_i {}] Company Servant {} destroyed", ::getTimeStamp(), strCompanyName);
    }
+
 
 void Company_i::initializeDatabase() {
    using namespace std::chrono;

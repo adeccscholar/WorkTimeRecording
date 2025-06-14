@@ -5,15 +5,14 @@
   \file
   \brief Client application for employee self-service access to personal data.
 
-  \details
-  This module implements the CORBA-based client used by employees to view and
-  interact with their own time tracking and organizational data. It connects to
-  the appropriate CORBA services via the TAO ORB and performs secure, read-only
-  access to individual records as published by the Application Server.
+  \details This module implements the CORBA-based client used by employees to 
+           view and interact with their own time tracking and organizational data. 
+           It connects to the appropriate CORBA services via the TAO ORB and 
+           performs secure, read-only access to individual records as published by 
+           the Application Server.
 
-  \note
-  This software component is part of the adecc Scholar project and is designed
-  for educational and productive use in distributed, service-based C++ systems.
+  \note This software component is part of the adecc Scholar project and is designed
+        for educational and productive use in distributed, service-based C++ systems.
 
   \author Volker Hillmann (adecc Systemhaus GmbH)
 
@@ -38,9 +37,9 @@
 #include "my_logging.h"
 #include "Corba_Interfaces.h"
 
-#include <OrganizationC.h>
-
 #include "Employee_Tools.h"
+
+#include <OrganizationC.h>
 
 #include <tao/corba.h>
 #include <orbsvcs/CosNamingC.h>
@@ -59,9 +58,9 @@ using namespace std::string_literals;
 #include <Windows.h>
 #endif
 
-static_assert(CORBAStub<Organization::Company>, "Organization::Company erfüllt nicht das CORBAStub-Concept");
-static_assert(CORBAStub<Organization::Employee>, "Organization::Employee erfüllt nicht das CORBAStub-Concept");
-static_assert(CORBAStubWithDestroy<Organization::Employee>, "Organization::Employee erfüllt nicht CORBAStubWithDestroy");
+static_assert(CORBAStub<Organization::Company>, "Organization::Company does not satisfy the CORBAStub concept");
+static_assert(CORBAStub<Organization::Employee>, "Organization::Employee does not satisfy the CORBAStub concept");
+static_assert(CORBAStubWithDestroy<Organization::Employee>, "Organization::Employee does not satisfy the CORBAStubWithDestroy concept");
 
 int main(int argc, char *argv[]) {
    const std::string strMainClient = "Client"s;
@@ -71,63 +70,18 @@ int main(int argc, char *argv[]) {
    // Platzhalter für Variable
    log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
-      CORBAStubHolder<Organization::Company> test("Test", argc, argv, "GlobalCorp/CompanyService"s);
-      auto company = [&test]() { return std::get<0>(test.vars());  };
+      CORBAClient<Organization::Company> factories("CORBA Factories", argc, argv, "GlobalCorp/CompanyService"s);
+      //auto company = [&factories]() { return std::get<0>(factories.vars());  };
+      auto company = [&factories]() { return factories.get<0>();  };
       std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
       GetEmployee(company(), 105);
       GetEmployees(company());
       Organization::Employee_var employee = company()->getEmployee(180);
 
-      /*
-      ORBClient<Organization::Company> company("ORB + Company"s, argc, argv, "GlobalCorp/CompanyService"s);
-      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
-      std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
-      GetEmployee(company(), 105);
-      GetEmployees(company());
-      Organization::Employee_var employee = company()->getEmployee(180);
-      */
-
-      /*
-      // 1st ORB initialisieren
-      CORBA::ORB_var orb = CORBA::ORB_init(argc, argv);
-      std::println(std::cout, "[{} {}] ORB initialized.", strMainClient, ::getTimeStamp());
-      
-      // 2nd connecting to nameservice
-      CORBA::Object_var naming_obj = orb->resolve_initial_references("NameService");
-      CosNaming::NamingContext_var naming_context = CosNaming::NamingContext::_narrow(naming_obj.in());
-      if (CORBA::is_nil(naming_context.in())) throw std::runtime_error("Failed to narrow Naming Context.");
-      std::println(std::cout, "[{} {}] Naming Service Context obtained.", strMainClient, ::getTimeStamp());
-
-      // 3rd Company Object
-      std::string strName = "GlobalCorp/CompanyService"s;
-      CosNaming::Name name;
-      name.length(1);
-      name[0].id = CORBA::string_dup(strName.c_str());
-      name[0].kind = CORBA::string_dup("Object");
-
-      std::println(std::cout, "[{} {}] Resolving {}.", strMainClient, ::getTimeStamp(), strName);
-      CORBA::Object_var company_obj = naming_context->resolve(name);
-      Organization::Company_var company_var = Organization::Company::_narrow(company_obj.in());
-      if (CORBA::is_nil(company_var.in())) throw std::runtime_error("Failed to narrow Company reference.");
-      std::println(std::cout, "[{} {}] Successfully obtained reference to company {}.", strMainClient, ::getTimeStamp(), strName);
-
-      // 4th using the company reference
-      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company_var->getTimeStamp())));
-      std::println(std::cout, "Company {}, to paid salaries {:.2f}", company_var->nameCompany(), company_var->getSumSalary());
-
-      Organization::Employee_var employee = company_var->getEmployee(180);
-      // Problematisch, überspringt Freigabe
-
-      // ----------------------------------------------------------------------------------------------------------------------
-
-      while (orb->work_pending()) orb->perform_work();
-      orb->destroy();
-      std::println(std::cout, "[{} {}] ORB destroyed.", strMainClient, ::getTimeStamp());
-      */
       }
    catch(Organization::EmployeeNotFound const& ex) {
-      // Notleine falls Exception vorher nicht behandelt wurde
+      // Safety net, in case the exception occurs outside the specific try-catch block
       log_error("[{} {}] unhandled 'EmployNotFound'- Exception with Employee ID: {} at {}.", 
                  strMainClient, ::getTimeStamp(), ex.requestedId, getTimeStamp(convertTo(ex.requestedAt)));
       return 1;
@@ -155,6 +109,6 @@ int main(int argc, char *argv[]) {
 
    log_state("[{} {}] Client exited gracefully.", strMainClient, ::getTimeStamp());
 
-   // Platzhalter für verzögerte Ausgabe
+   // Placeholder for deferred output
    return 0;
     }

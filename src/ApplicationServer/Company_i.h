@@ -69,7 +69,7 @@ public:
      \param company_poa POA used to activate the company servant.
      \param emloyee_poa POA used to activate employee servants.
     */
-   Company_i(PortableServer::POA_ptr company_poa, PortableServer::POA_ptr emloyee_poa);
+   Company_i(PortableServer::POA_ptr company_poa, PortableServer::POA_ptr employee_poa);
 
    /**
      \brief Destructor for the Company_i servant.
@@ -80,6 +80,28 @@ public:
      \details The destructor is only used to log the destruction.
     */
    virtual ~Company_i();
+
+   /**
+     \brief Assigns the Portable Object Adapter (POA) used for employee servants.
+   
+     \details This method sets the `employee_poa_` member to the given `PortableServer::POA_ptr`.
+              It is expected to be called only once during the initialization phase after the
+              `Company_i` object has been created. The provided POA will later be used to activate
+              transient employee servants (e.g., for `getEmployee()` responses).
+ 
+     \param employee_poa Pointer to the POA that will manage employee servant instances.
+ 
+     \throws std::logic_error If this method is called more than once or if the POA has already been set.
+ 
+     \note The POA reference is duplicated using `PortableServer::POA::_duplicate` to properly manage its lifetime.
+     \note This setter allows deferred configuration, separating employee POA injection from constructor logic.
+   */
+   void set_employee_poa(PortableServer::POA_ptr employee_poa) {
+      if (!CORBA::is_nil(employee_poa_.in()))
+         throw std::logic_error(std::format("[{} {}] Employee POA has already been set.", "Company_i::set_employee_poa", ::getTimeStamp()));
+      employee_poa_ = PortableServer::POA::_duplicate(employee_poa);
+      }
+
 
    /**
      \brief Returns the name of the company.

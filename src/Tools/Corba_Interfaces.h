@@ -45,6 +45,7 @@
 
 #include "tao/Object.h"
 #include <tao/PortableServer/Servant_Base.h>
+#include <tao/PortableServer/PortableServer.h>
 
 #include <orbsvcs/CosNamingC.h>
 
@@ -54,6 +55,8 @@
 #include <string>
 #include <tuple>
 #include <array>
+#include <atomic>
+#include <thread>
 
 using namespace std::string_literals;
 
@@ -112,7 +115,7 @@ public:
 
    ~ORBBase() {
       if (!CORBA::is_nil(orb_.in())) {
-         while (orb_->work_pending()) orb_->perform_work();
+         // while (orb_->work_pending()) orb_->perform_work();
          try {
             orb_->destroy();
             log_trace<2>("[{} {}] ORB destroyed.", strName, ::getTimeStamp());
@@ -123,6 +126,7 @@ public:
          }
       }
 
+   ORBBase() = delete;
    ORBBase(ORBBase const&) = delete;
    ORBBase& operator = (ORBBase const&) = delete;
 
@@ -134,80 +138,229 @@ public:
    CosNaming::NamingContext_ptr naming_context() { return naming_context_.in(); }
 
    std::vector<std::string> get_names() { return get_all_names(naming_context()); }
+protected:
+   std::string const& Text() const { return strName; }
 };
 
 
 template <CORBASkeleton corba_skel_ty>
 class CorbaServer : virtual public ORBBase {
+private:
+   using corba_stub_ty  = typename corba_skel_ty::_stub_type;
+   using corba_stub_var = typename corba_skel_ty::_stub_var_type;
+   static_assert(CORBAStub<corba_stub_ty>, "servent stub type dosn't satisfy the CORBAStub concept");
+
+   PortableServer::POA_var        root_poa_     = PortableServer::POA::_nil();
+   PortableServer::POAManager_var poa_manager_  = PortableServer::POAManager::_nil();
+   PortableServer::POA_var        servant_poa_  = PortableServer::POA::_nil();
+   PortableServer::ObjectId_var   servant_oid_  = {};
+   CosNaming::Name                servant_name_;
+   corba_skel_ty*                 servant_      = nullptr;  
+   corba_stub_var                 servant_var_  = {}; // corba_stub_ty::_narrow();
+   std::function<void()>          cleanup_func_ = nullptr;
+   std::thread                    orb_thread;
+public:
+   CorbaServer() = delete;
+   CorbaServer(std::string const& pName, int argc, char* argv[]) : ORBBase(pName, argc, argv) {
+      CORBA::Object_var poa_object = orb()->resolve_initial_references("RootPOA");
+      root_poa_ = PortableServer::POA::_narrow(poa_object.in());
+      if (CORBA::is_nil(root_poa_.in())) 
+         throw std::runtime_error(std::format("[{} {}] Failed to narrow the POA.", Text(), ::getTimeStamp()));
+
+      poa_manager_ = root_poa_->the_POAManager();
+      poa_manager_->activate();
+      log_trace<2>("[{} {}] RootPOA obtained and POAManager is activated.", Text(), ::getTimeStamp());
+
+      CORBA::PolicyList pols;
+      pols.length(1);
+      pols[0] = root_poa_->create_lifespan_policy(PortableServer::PERSISTENT);
+
+
+      servant_poa_ = root_poa_->create_POA("ServantPOA", poa_manager_.in(), pols);
+      log_trace<2>("[{} {}] POA for the servant created.", Text(), ::getTimeStamp());
+
+      for (uint32_t i = 0; i < pols.length(); ++i) pols[i]->destroy();
+      }
+
+   ~CorbaServer() {
+      UnRegisterServant();
+      log_trace<2>("[{} {}] Destroying servant POA ...", Text(), ::getTimeStamp());
+      servant_poa_->destroy(true, true);
+
+      log_trace<2>("[{} {}] Shutdown ORB ...", Text(), ::getTimeStamp());
+      orb()->shutdown(true);
+      if (orb_thread.joinable()) {
+         log_trace<2>("[{} {}] Join the ORB Thread to wait ...", Text(), ::getTimeStamp());
+         orb_thread.join();
+         }
+      else {
+         log_trace<2>("[{} {}] ORB Thread isn't joinable, maybe already gone ...", Text(), ::getTimeStamp());
+         }
+      log_trace<2>("[{} {}] ORB Thread gone ...", Text(), ::getTimeStamp());
+      }
+
+   void RegisterServant(std::string const& pName, corba_skel_ty* pServant) {
+      UnRegisterServant();
+
+      if(pName.size() > 0 && pServant  != nullptr) {
+         servant_ = pServant;
+         servant_oid_ = servant_poa_->activate_object(servant_);
+
+         CORBA::Object_var obj_ref = servant_poa_->id_to_reference(servant_oid_.in());
+         servant_var_ = corba_stub_ty::_narrow(obj_ref.in());
+         if (CORBA::is_nil(servant_var_)) {
+            throw std::runtime_error(std::format("[{} {}] CORBA Error while narrowing Reference.", 
+                                           "CORBAServent::RegisterServant", ::getTimeStamp()));
+            }
+         log_trace<2>("[{} {}] Company servant activate under CompanyPOA.", "CORBAServant::RegisterServant", ::getTimeStamp());
+         }
+
+      servant_name_.length(1);
+      servant_name_[0].id = CORBA::string_dup(pName.c_str());
+      servant_name_[0].kind = CORBA::string_dup("Object");
+
+      naming_context()->rebind(servant_name_, servant_var_.in());
+      std::println("[{} {}] Company servant registered with nameservice as {}.", Text(), ::getTimeStamp(), pName);
+
+      cleanup_func_ = nullptr;
+      }
+
+   void RegisterServant(std::string const& pName, std::function<void()>&& cleanup_fn, corba_skel_ty* pServant) {
+      RegisterServant(pName, pServant);
+      std::swap(cleanup_func_, cleanup_fn);
+      }
+
+   void UnRegisterServant() {
+      if (servant_name_.length() > 0) {
+         log_trace<2>("[{} {}] Unbinding {} from nameservice ...", Text(), servant_name_[0].id.in(), ::getTimeStamp());
+         try {
+            naming_context()->unbind(servant_name_);
+            }
+         catch (CORBA::Exception const& ex) {
+            log_error("[{} {}] Error unbinding {} from nameservice (maybe already gone): {}", Text(), servant_name_[0].id.in(), ::getTimeStamp(), toString(ex));
+            // we continue because we belief the nameservice is already gone
+            }
+         servant_name_.length(0);
+         }
+
+      if(servant_ != nullptr) { //} && !CORBA::is_nil(servant_oid_.in())) {
+         std::println("[{} {}] Deactivate servant and remove refcount()...", Text(), ::getTimeStamp());
+         servant_poa_->deactivate_object(servant_oid_);
+         servant_->_remove_ref();
+         servant_ = nullptr; //  typename corba_skel_ty::_nil();
+         }
+
+      if (cleanup_func_ != nullptr) cleanup_func_();
+      }
+
+   void run(std::atomic<bool>& shutdown_requested) {
+      // ---------------------------------------------------------------------------------
+      //  Launch the ORB event loop in a separate thread
+      // ---------------------------------------------------------------------------------
+      log_trace<2>("[{} {}] Starting ORB event loop in separate thread ...", Name(), ::getTimeStamp());
+
+
+      orb_thread = std::thread([&]() {
+         std::string strOrb = "ORB Thread "s + Name();
+         try {
+            orb()->run();
+            log_trace<2>("   [{} {}] orb->run() finished.", strOrb, ::getTimeStamp());
+            }
+         catch (CORBA::Exception const& ex) {
+            log_error("  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), toString(ex));
+            }
+         catch (std::exception const& ex) {
+            log_error("  [{} {}], CORBA Exception in orb->run(): {}", strOrb, ::getTimeStamp(), ex.what());
+            }
+         catch (...) {
+            log_error("  [{} {}], unknown Exception in orb->run()", strOrb, ::getTimeStamp());
+            }
+         });
+      // ---------------------------------------------------------------------------------
+      // Wait for shutdown signal in main thread (soft closing)
+      // ---------------------------------------------------------------------------------
+      log_state("[{} {}] Server is ready. <Waiting for shutdown signal (e.g. Cntrl+C) ...", Name(), ::getTimeStamp());
+      while (!shutdown_requested) {
+         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+         }
+      log_state("[{} {}] Server finsihing, ...", Name(), ::getTimeStamp());
+      }
+
+   CorbaServer(CorbaServer const&) = delete;
+   CorbaServer& operator = (CorbaServer const&) = delete;
+
+   PortableServer::POA_ptr root_poa() { return root_poa_.in(); }
+   PortableServer::POAManager_ptr poa_manager() { return poa_manager_.in(); }
+   PortableServer::POA_ptr servant_poa() { return servant_poa_.in(); }
 
    };
+
 
 /**
-  \brief Generic CORBA client helper to initialize ORB and resolve a service stub via Naming Service.
- 
-  \tparam corba_ty The CORBA stub interface type.
- 
-  \details
-  This class template encapsulates common ORB initialization and Naming Service resolution
-  for a given CORBA interface type. It performs:
-  - ORB initialization with command line arguments,
-  - Resolution of the Naming Service context,
-  - Lookup and narrowing of the named CORBA service,
-  providing safe accessors to the ORB and factory interface.
- */
-template <CORBAStub corba_ty>
-class ORBClient : virtual public ORBBase {
-   using corba_var_ty = typename corba_ty::_var_type;
+ \class CORBAClient
+ \brief Generic variadic CORBA client template for resolving multiple CORBA service stubs via Naming Service.
 
-   std::string                  strService     = ""s;
-   corba_var_ty                 factory_       = nullptr;
-public:
-   ORBClient() = delete;
-   ORBClient(std::string const& paName, int argc, char* argv[], std::string const& paService) : ORBBase(paName, argc, argv), 
-                 strService { paService }  {
-      CosNaming::Name_var name = new CosNaming::Name;
-      name->length(1);
-      name[0].id   = CORBA::string_dup(strService.c_str());
-      name[0].kind = CORBA::string_dup("Object");
+ \tparam Stubs A parameter pack of CORBA stub interface types (e.g., MyService1, MyService2), each must define _var_type and _obj_type.
 
-      log_trace<2>("[{} {}] Resolving {}.", Name(), ::getTimeStamp(), strService);
-      CORBA::Object_var factory_obj = naming_context()->resolve(name);
+ \details
+    This generalized client class initializes the ORB and resolves multiple CORBA service references in a uniform and safe way.
+    For each given interface in the template parameter pack, a corresponding service name must be provided at construction time.
 
-      factory_ = typename corba_ty::_narrow(factory_obj.in());
-      if (CORBA::is_nil(factory_.in())) throw std::runtime_error(std::format("Failed to narrow factory reference for {1:} in {0:}.", 
-                                 Name(), strService));
-      log_trace<2>("[{} {}] Successfully obtained reference for {}.", Name(), ::getTimeStamp(), strService);
-      
-      }
+    Key features:
+    - Compile-time fixed number of stub types using variadic templates
+    - Automatic resolution of each stub from the Naming Service
+    - Tuple-based storage of resolved `_var_type` smart references
+    - Index-sequenced resolution and cleanup logic for scalable management
 
-
-   ~ORBClient() {
-      }
-
-
-   ORBClient(ORBClient const&) = delete;
-   ORBClient& operator = (ORBClient const&) = delete;
-
-   CORBA::ORB_ptr orb() { return orb_.in();  }
-   CORBA::ORB* orb() const { return orb_.in(); }
-
-   corba_ty* operator() () { return factory_.in(); }
-   };
-
-
+ \note The class is non-copyable and requires explicit service names matching the template parameter count.
+ \see \ref appclient for the workcircle of a client
+ \see \ref ORBClientPage for the single-stub version
+ \todo Extend for nested naming contexts (multi-level CosNaming::Name support)
+ \todo Optional policy injection (timeouts, retries, etc.)
+ \todo Support for lazy resolution or runtime stub selection
+*/
 template <CORBAStub... Stubs>
-class CORBAStubHolder : virtual public ORBBase {
+class CORBAClient : virtual public ORBBase {
+public:
+   using VarTuple = std::tuple<typename Stubs::_var_type...>;  ///< Tuple of CORBA smart stub types
+   
+   /**
+    \brief Alias to access the CORBA stub interface type at a given index.
+
+    \tparam I Index of the stub in the template parameter pack \c Stubs.
+    \return Corresponding stub interface type (i.e., the actual CORBA object type such as \c MyService::_obj_type).
+
+    \details
+     This alias resolves the interface type stored at position \c I in the internal \c VarTuple.
+     It is used to allow type-safe access and narrow operations on CORBA stubs.
+
+    \note The index \c I must be in range \c [0, NumStubs).
+   */
+   template <std::size_t I>
+   using StubInterface = typename std::tuple_element_t<I, VarTuple>::_obj_type;
+
 private:
-   using VarTuple = std::tuple<typename Stubs::_var_type...>;
-   static constexpr std::size_t NumStubs = sizeof...(Stubs);
-   using NameArray = std::array<std::string, NumStubs>;
+   static constexpr std::size_t NumStubs = sizeof...(Stubs);   ///< Number of CORBA services to resolve
+   using NameArray = std::array<std::string, NumStubs>;        ///< Service name array (1 per stub)
 
-   VarTuple stubs_;
-   NameArray names_;
+   VarTuple stubs_;          ///< Tuple of resolved stub instances
+   NameArray names_;         ///< Names used for resolution in Naming Service
 
+   /**
+     \brief Resolves all stubs using the provided service names.
+     \tparam Is Parameter pack of compile-time indices (0 to N-1) used to expand stub resolution
+     \param index_sequence Helper to expand the parameter pack via fold expression
+     \note Uses a fold-expression over resolve_single<I>() to resolve each stub
+    */
    template <std::size_t... Is>
    void resolve_all(std::index_sequence<Is...>) { ( ..., resolve_single<Is>() ); }
    
+   /**
+     \brief Resolves a single CORBA service stub.
+     \tparam I The index of the stub (corresponds to service name at position I)
+     \throws std::runtime_error if the service cannot be resolved or narrowed
+     \post The resolved stub is stored in \c stubs_[I]
+    */
    template <std::size_t I>  
    void resolve_single() {
       using VarType = std::tuple_element_t<I, VarTuple>;
@@ -231,9 +384,20 @@ private:
       log_trace<2>("[{} {}] Successfully obtained reference for {}.", Name(), ::getTimeStamp(), strService);
       }
  
+   /**
+     \brief Releases all CORBA references.
+     \tparam Is Parameter pack of compile-time indices for each stub
+     \param index_sequence Helper to expand \c release_single<I>() via fold expression
+     \note Calls _nil() on each stub instance
+    */
    template <std::size_t... Is>
    void release_all(std::index_sequence<Is...>) { (..., release_single<Is>()); }
 
+   /**
+     \brief Releases a single stub by resetting its reference to nil.
+     \tparam I Index of the stub to release
+     \post The stub at index I is set to a nil reference
+    */
    template <std::size_t I>
    void release_single() {
       std::get<I>(stubs_) = std::tuple_element_t<I, VarTuple>::_obj_type::_nil();
@@ -241,28 +405,101 @@ private:
       }
 
 public:
-   CORBAStubHolder() = delete;
+   /**
+     \brief Deleted default constructor. Requires service names and ORB initialization.
+    */
+   CORBAClient() = delete;
 
-   // Variadic Konstruktor: erwartet genau so viele Argumente vom Type std::string wie Stubs vorhanden sind
+   /**
+     \brief Constructs the client, initializes the ORB, and resolves all stubs.
+
+     \tparam Names A variadic template parameter pack; each type must be convertible to std::string.
+                   The number of parameters must exactly match the number of CORBA stub types (\c Stubs).
+
+     \param paClientName Logical name for the client (used in logging and ORBBase)
+     \param argc Argument count (typically from \c main)
+     \param argv Argument vector (typically from \c main)
+     \param names Variadic list of service names to resolve (in order, one per stub)
+
+     \throws std::runtime_error if any service name cannot be resolved or narrowed to the expected stub type
+
+     \post All \c Stubs are resolved and stored in the internal \c stubs_ tuple
+     \note The constructor uses static_assert-style constraints via \c requires to ensure proper usage
+     \see resolve_all for the internal resolution logic
+    */
    template<typename... Names> requires (sizeof...(Names) == NumStubs) && (std::is_convertible_v<Names, std::string> && ...)
-   CORBAStubHolder(std::string const& paClientName, int argc, char* argv[], Names&&... names) : ORBBase(paClientName, argc, argv),
+   CORBAClient(std::string const& paClientName, int argc, char* argv[], Names&&... names) : ORBBase(paClientName, argc, argv),
             names_ { { std::forward<Names>(names)... } } {
       resolve_all(std::make_index_sequence<NumStubs>{});
       log_trace<2>("[{} {}] All references obtained successfully.", Name(), ::getTimeStamp());
       }
 
-   CORBAStubHolder(CORBAStubHolder const&) = delete;
-   CORBAStubHolder& operator = (CORBAStubHolder const&) = delete;
+   /**
+     \brief Deleted copy constructor to prevent copying.
+    */
+   CORBAClient(CORBAClient const&) = delete;
 
-   ~CORBAStubHolder() { 
+   /**
+     \brief Deleted copy assignment operator.
+    */
+   CORBAClient& operator = (CORBAClient const&) = delete;
+
+   /**
+     \brief Destructor. Releases all references.
+    */
+   ~CORBAClient() { 
       release_all(std::make_index_sequence<NumStubs>{});  
       log_trace<2>("[{} {}] All references released successfully.", Name(), ::getTimeStamp());
       }
 
+   /**
+     \brief Accessor for the CORBA stub at the given index with lazy resolution.
+
+     \tparam I Index of the stub in the template parameter pack \c Stubs.
+     \return A raw CORBA pointer of type \c StubInterface<I>* representing the resolved service.
+
+     \details
+     This function checks whether the stub at index \c I has already been resolved.
+     If not, it calls \c resolve_single<I>() to perform Naming Service lookup and narrowing.
+
+     The stub is stored internally as a \c _var_type, and this function returns the underlying raw pointer using \c .in().
+
+     \throws std::runtime_error if resolution or narrowing fails during lazy initialization.
+
+     \note This method uses lazy resolution. The ORB and Naming Service must be available at the time of the first call.
+     \see resolve_single
+     \see StubInterface
+   */
+   template<std::size_t I>
+   StubInterface<I>* get() {
+      if (CORBA::is_nil(std::get<I>(stubs_))) {
+         resolve_single<I>();
+         }
+      return std::get<I>(stubs_).in();
+      }
+
+   /**
+     \brief Accessor for the tuple of resolved stub instances (mutable).
+     \return Reference to the internal VarTuple
+    */
    VarTuple& vars() { return stubs_; }
+
+   /**
+     \brief Accessor for the tuple of resolved stub instances (const).
+     \return Const reference to the internal VarTuple
+    */
    VarTuple const& vars() const { return stubs_; }
 
+   /**
+     \brief Accessor for the service name array (mutable).
+     \return Reference to the internal name array
+    */
    NameArray& names() { return names_; }
+
+   /**
+     \brief Accessor for the service name array (const).
+     \return Const reference to the internal name array
+    */
    NameArray const& names() const { return names_; }
 
 };
