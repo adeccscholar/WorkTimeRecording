@@ -71,6 +71,9 @@ int main(int argc, char *argv[]) {
    log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
       CORBAClient<Organization::Company> factories("CORBA Factories", argc, argv, "GlobalCorp/CompanyService"s);
+
+      for (auto const& name : factories.get_names()) std::println(std::cout, "{}", name);
+
       //auto company = [&factories]() { return std::get<0>(factories.vars());  };
       auto company = [&factories]() { return factories.get<0>();  };
       std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));

@@ -282,3 +282,152 @@ Full Source of the first version with complete workcycle.
 \endcode
   
  */
+  
+/**
+ \page firstservertemplate First template for Corba Server – Overview
+ 
+ \brief Template class for single CORBA server-side skeleton management.
+ \tparam corba_skel_ty CORBA servant skeleton type. Must fulfill the \ref CORBASkeleton concept.
+ 
+  \details
+  The aim of this template is to generalize the lifecycle described on page \ref appserver in a template and make it reusable.
+  Because parts of the process correspond to a client, these steps have been moved to the ORBBase class, which is used jointly. 
+  As this can occur multiple times, it is inherited virtually. To make the template parameters secure, the concept CORBASkeleton 
+  was also defined so that only skeletons compiled with the IDL compiler are permitted.
+  
+  \details
+  The first implemented `CorbaServer` class is a general-purpose CORBA server wrapper for a single skeleton type.
+  It automates:
+  - Initialization of the POA and POA Manager
+  - Creation of a dedicated POA for servant activation
+  - Activation and registration of a CORBA servant
+  - Naming Service binding and unbinding
+  - ORB execution in a background thread
+  - Cleanup and safe shutdown behavior via RAII
+ 
+  This class is tightly coupled with the `ORBBase` base class, which handles the initialization
+  of the ORB and naming context.
+ 
+  \note The class supports optional resource cleanup via a std::function callback.
+  \note This version is specialized for a single servant; for multiple skeletons, see `CORBAServer<...>`.
+ 
+  \see ORBBase
+  \see CORBASkeleton
+  \see CORBAStub
+  \see CORBAClient
+ 
+  \code{.cpp}
+template <CORBASkeleton corba_skel_ty>
+class CorbaServer : virtual public ORBBase {
+private:
+   using corba_stub_ty  = typename corba_skel_ty::_stub_type;
+   using corba_stub_var = typename corba_skel_ty::_stub_var_type;
+   static_assert(CORBAStub<corba_stub_ty>, "servent stub type dosn't satisfy the CORBAStub concept");
+
+   PortableServer::POA_var        root_poa_     = PortableServer::POA::_nil();
+   PortableServer::POAManager_var poa_manager_  = PortableServer::POAManager::_nil();
+   PortableServer::POA_var        servant_poa_  = PortableServer::POA::_nil();
+   PortableServer::ObjectId_var   servant_oid_  = {};
+   CosNaming::Name                servant_name_;
+   corba_skel_ty*                 servant_      = nullptr;  
+   corba_stub_var                 servant_var_  = {};
+   std::function<void()>          cleanup_func_ = nullptr;
+   std::thread                    orb_thread;
+
+public:
+   CorbaServer() = delete;
+
+   CorbaServer(std::string const& pName, int argc, char* argv[]) : ORBBase(pName, argc, argv) {
+      CORBA::Object_var poa_object = orb()->resolve_initial_references("RootPOA");
+      root_poa_ = PortableServer::POA::_narrow(poa_object.in());
+      if (CORBA::is_nil(root_poa_.in())) 
+         throw std::runtime_error(std::format("[{} {}] Failed to narrow the POA.", Text(), ::getTimeStamp()));
+
+      poa_manager_ = root_poa_->the_POAManager();
+      poa_manager_->activate();
+
+      CORBA::PolicyList pols;
+      pols.length(1);
+      pols[0] = root_poa_->create_lifespan_policy(PortableServer::PERSISTENT);
+
+      servant_poa_ = root_poa_->create_POA("ServantPOA", poa_manager_.in(), pols);
+      for (uint32_t i = 0; i < pols.length(); ++i) pols[i]->destroy();
+   }
+
+   ~CorbaServer() {
+      UnRegisterServant();
+      servant_poa_->destroy(true, true);
+      orb()->shutdown(true);
+      if (orb_thread.joinable()) {
+         orb_thread.join();
+      }
+   }
+
+   void RegisterServant(std::string const& pName, corba_skel_ty* pServant) {
+      UnRegisterServant();
+
+      if(pName.size() > 0 && pServant != nullptr) {
+         servant_ = pServant;
+         servant_oid_ = servant_poa_->activate_object(servant_);
+
+         CORBA::Object_var obj_ref = servant_poa_->id_to_reference(servant_oid_.in());
+         servant_var_ = corba_stub_ty::_narrow(obj_ref.in());
+         if (CORBA::is_nil(servant_var_)) {
+            throw std::runtime_error(std::format("[{} {}] CORBA Error while narrowing Reference.", 
+                                           "CORBAServent::RegisterServant", ::getTimeStamp()));
+         }
+      }
+
+      servant_name_.length(1);
+      servant_name_[0].id = CORBA::string_dup(pName.c_str());
+      servant_name_[0].kind = CORBA::string_dup("Object");
+
+      naming_context()->rebind(servant_name_, servant_var_.in());
+      cleanup_func_ = nullptr;
+   }
+
+   void RegisterServant(std::string const& pName, std::function<void()>&& cleanup_fn, corba_skel_ty* pServant) {
+      RegisterServant(pName, pServant);
+      std::swap(cleanup_func_, cleanup_fn);
+   }
+
+   void UnRegisterServant() {
+      if (servant_name_.length() > 0) {
+         try {
+            naming_context()->unbind(servant_name_);
+         } catch (CORBA::Exception const& ex) {
+            // Ignore, assume already gone
+         }
+         servant_name_.length(0);
+      }
+
+      if(servant_ != nullptr) {
+         servant_poa_->deactivate_object(servant_oid_);
+         servant_->_remove_ref();
+         servant_ = nullptr;
+      }
+
+      if (cleanup_func_ != nullptr) cleanup_func_();
+   }
+
+   void run(std::atomic<bool>& shutdown_requested) {
+      orb_thread = std::thread([&]() {
+         try {
+            orb()->run();
+         } catch (...) {}
+      });
+
+      while (!shutdown_requested) {
+         std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      }
+   }
+
+   CorbaServer(CorbaServer const&) = delete;
+   CorbaServer& operator = (CorbaServer const&) = delete;
+
+   PortableServer::POA_ptr root_poa() { return root_poa_.in(); }
+   PortableServer::POAManager_ptr poa_manager() { return poa_manager_.in(); }
+   PortableServer::POA_ptr servant_poa() { return servant_poa_.in(); }
+};
+  \endcode
+ */

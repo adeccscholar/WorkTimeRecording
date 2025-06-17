@@ -139,6 +139,13 @@
 */
 
 /**
+  \dir src/RaspberryTools
+  \details The files in this directoy are part of a header-only library for the **RaspberryTools** component library,
+           a modular, header-only C++ collection for accessing and abstracting low-level GPIO, I²C, and SPI hardware
+           interfaces on Raspberry Pi and compatible single-board systems.
+*/
+
+/**
   \dir src/ApplicationServer
   \brief Contains the Source files for the Implementation of the main server for the time tracking
 

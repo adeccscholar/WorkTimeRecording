@@ -93,7 +93,7 @@ inline void ShowEmployee(std::ostream& out, Organization::Employee_ptr employee)
  \note Handles and logs CORBA exceptions, including EmployeeNotFound.
  */
 inline void GetEmployee(Organization::Company_ptr comp_in, CORBA::Long seekId) {
-	static const constinit std::string strScope = "GetEmployee()"s;
+	static const std::string strScope = "GetEmployee()"s;
 	log_trace<2>("[{} {}] Requesting employee with ID: {}", strScope, getTimeStamp(comp_in), seekId);
 	// Organization::Employee_var employee_var = Organization::Employee::_nil(); // outside declared
 	try {
@@ -203,7 +203,7 @@ std::vector<Destroyable_Var<corba_ty>> move_from_sequence(typename CorbaSequence
  \note The function cleans up the returned references by calling \c destroy() on each.
  */
 inline void GetEmployees(Organization::Company_ptr comp_in) {
-	static const constinit std::string strScope = "GetEmployees()"s;
+	static const std::string strScope = "GetEmployees()"s;
 	log_trace<2>("[{} {}] Requesting employees.", strScope, getTimeStamp(comp_in));
 
 	auto values = move_from_sequence<Organization::Employee>(Organization::EmployeeSeq_var { comp_in->getEmployees() });

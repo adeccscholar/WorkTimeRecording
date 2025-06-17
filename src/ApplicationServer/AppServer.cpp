@@ -45,6 +45,7 @@
 
 #include "Company_i.h"
 #include "Corba_Interfaces.h"
+#include "Corba_CombiInterface.h"
 
 #include <tao/corba.h>
 #include <tao/PortableServer/PortableServer.h>
@@ -69,6 +70,7 @@
 #endif
 
 using namespace std::string_literals;
+//using namespace std::chrono_literals;
 
 /**
   \brief Indicates whether a shutdown has been requested.
@@ -127,18 +129,49 @@ int main(int argc, char *argv[]) {
    SetConsoleOutputCP(CP_UTF8);  
 #endif
    std::string strName = "GlobalCorp/CompanyService"s;
-   try {
-      CorbaServer<Company_i> server(strAppl, argc, argv);
+   {
+      /*
+      CORBAClientServer<Skel<Company_i>, Stub<Organization::Company>> wrapper("CORBA Factories"s, argc, argv, "GlobalCorp/CompanyService"s );
+      //CORBAClientServer<Skel<Company_i>> wrapper("CORBA Factories"s, argc, argv);
 
       CORBA::PolicyList empl_pol;
       empl_pol.length(2);
-      empl_pol[0] = server.root_poa()->create_lifespan_policy(PortableServer::TRANSIENT);
-      empl_pol[1] = server.root_poa()->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
+      empl_pol[0] = wrapper.root_poa()->create_lifespan_policy(PortableServer::TRANSIENT);
+      empl_pol[1] = wrapper.root_poa()->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
 
+      PortableServer::POA_var employee_poa = wrapper.root_poa()->create_POA("EmployeePOA", wrapper.poa_manager(), empl_pol);
+      for (uint32_t i = 0; i < empl_pol.length(); ++i) empl_pol[i]->destroy();
+
+      wrapper.register_servant<0>(strName, [poa = std::move(employee_poa)]() mutable {
+                                 if (!CORBA::is_nil(poa.in())) {
+                                    poa->destroy(true, true);
+                                    log_trace<2>("[independent Lambda Fuction {}] Employee POA destroyed.", ::getTimeStamp());
+                                    }
+                                 },
+                                  new Company_i(wrapper.servant_poa(), employee_poa.in()));
+      auto company = [&wrapper]() { return wrapper.client().get<0>();  };
+      
+      wrapper.run(shutdown_requested);
+
+      */
+   }
+   
+   try {
+      CORBAServer<Company_i> server(strAppl, argc, argv, std::chrono::milliseconds(500));
+ 
+      auto CreateTransient = [](PortableServer::POA_ptr poa) {
+         CORBA::PolicyList pol_list;
+         pol_list.length(2);
+         pol_list[0] = poa->create_lifespan_policy(PortableServer::TRANSIENT);
+         pol_list[1] = poa->create_servant_retention_policy(PortableServer::ServantRetentionPolicyValue::RETAIN);
+         return pol_list;
+         };
+
+      auto empl_pol = CreateTransient(server.root_poa());
       PortableServer::POA_var employee_poa = server.root_poa()->create_POA("EmployeePOA", server.poa_manager(), empl_pol);
       for (uint32_t i = 0; i < empl_pol.length(); ++i) empl_pol[i]->destroy();
 
-      server.RegisterServant(strName, [poa = std::move(employee_poa)]() mutable {
+      server.register_servant<0>(strName, [poa = std::move(employee_poa)]() mutable {
                                          if(!CORBA::is_nil(poa.in())) {
                                             poa->destroy(true, true);
                                             log_trace<2>("[independent Lambda Fuction {}] Employee POA destroyed.", ::getTimeStamp());
