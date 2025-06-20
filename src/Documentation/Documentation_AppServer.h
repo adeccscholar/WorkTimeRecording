@@ -6,7 +6,7 @@
  \brief Doxygen Documentation Page for the CORBA Application Server
 
  \details
- \subpage appserver "CORBA Application Server – Overview"
+ Contains documentation pages \ref appserver, \ref app_lifecycle and \ref firstservertemplate . 
  */
  
 /**

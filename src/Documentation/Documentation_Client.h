@@ -7,7 +7,7 @@
 
  \details client implementationen, complete workcycle and a first template
  
- \subpage appclient "CORBA Client Application – Overview"
+ Contains documentation pages \ref appclient and \ref ORBClientPage
  
  \author Volker Hillmann (adecc Systemhaus GmbH)
  
@@ -46,9 +46,9 @@
  \details The client illustrates:
           - Resolving CORBA object references via the Naming Service
           - Correct use of `*_var` and `*_ptr` CORBA smart pointer types
- - Managing dynamically created (transient) CORBA servants
- - Cleanly destroying remote servant objects using `destroy()` calls
- - Dealing with CORBA-specific exceptions (e.g., `TRANSIENT`, `COMM_FAILURE`)
+          - Managing dynamically created (transient) CORBA servants
+          - Cleanly destroying remote servant objects using `destroy()` calls
+          - Dealing with CORBA-specific exceptions (e.g., `TRANSIENT`, `COMM_FAILURE`)
 
  \section appclient_sequence Functional Walkthrough
 

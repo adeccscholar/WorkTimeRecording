@@ -43,8 +43,22 @@
 
   \copyright Copyright © adecc Systemhaus GmbH 2021–2025
 
-  \license This project is mostly licensed under the GNU General Public License v3.0.
-           See the LICENSE file for details.
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
+
 
   \version 1.0
   \date    31.05.2025 created
@@ -609,7 +623,7 @@ private:
    /**
      \brief Resolves all stubs using the provided service names.
      \tparam Is Parameter pack of compile-time indices (0 to N-1) used to expand stub resolution
-     \param index_sequence Helper to expand the parameter pack via fold expression
+     \details The param std::index_sequence<Is...> is a Helper to expand the parameter pack via fold expression
      \note Uses a fold-expression over resolve_single<I>() to resolve each stub
     */
    template <std::size_t... Is>
@@ -647,7 +661,7 @@ private:
    /**
      \brief Releases all CORBA references.
      \tparam Is Parameter pack of compile-time indices for each stub
-     \param index_sequence Helper to expand \c release_single<I>() via fold expression
+     \details The Param std::index_sequence<Is...> is a Helper to expand \c release_single<Idx>() via fold expression
      \note Calls _nil() on each stub instance
     */
    template <std::size_t... Is>
@@ -655,13 +669,13 @@ private:
 
    /**
      \brief Releases a single stub by resetting its reference to nil.
-     \tparam I Index of the stub to release
-     \post The stub at index I is set to a nil reference
+     \tparam Idx Index of the stub to release
+     \post The stub at index Idx is set to a nil reference
     */
-   template <std::size_t I>
+   template <std::size_t Idx>
    void release_single() {
-      std::get<I>(stubs_) = std::tuple_element_t<I, VarTuple>::_obj_type::_nil();
-      log_trace<8>("[{} {}] Successfully released reference for {} .", Name(), ::getTimeStamp(), names_[I]);
+      std::get<Idx>(stubs_) = std::tuple_element_t<Idx, VarTuple>::_obj_type::_nil();
+      log_trace<8>("[{} {}] Successfully released reference for {} .", Name(), ::getTimeStamp(), names_[Idx]);
       }
 
 public:
@@ -715,12 +729,12 @@ public:
    /**
      \brief Accessor for the CORBA stub at the given index with lazy resolution.
 
-     \tparam I Index of the stub in the template parameter pack \c Stubs.
-     \return A raw CORBA pointer of type \c StubInterface<I>* representing the resolved service.
+     \tparam Idx Index of the stub in the template parameter pack \c Stubs.
+     \return A raw CORBA pointer of type `StubInterface<Idx>*` representing the resolved service.
 
      \details
      This function checks whether the stub at index \c I has already been resolved.
-     If not, it calls \c resolve_single<I>() to perform Naming Service lookup and narrowing.
+     If not, it calls \c resolve_single<Idx>() to perform Naming Service lookup and narrowing.
 
      The stub is stored internally as a \c _var_type, and this function returns the underlying raw pointer using \c .in().
 
@@ -730,12 +744,12 @@ public:
      \see resolve_single
      \see StubInterface
    */
-   template<std::size_t I>
-   StubInterface<I>* get() {
-      if (CORBA::is_nil(std::get<I>(stubs_))) {
-         resolve_single<I>();
+   template<std::size_t Idx>
+   StubInterface<Idx>* get() {
+      if (CORBA::is_nil(std::get<Idx>(stubs_))) {
+         resolve_single<Idx>();
          }
-      return std::get<I>(stubs_).in();
+      return std::get<Idx>(stubs_).in();
       }
 
    /**

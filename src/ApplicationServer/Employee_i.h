@@ -26,17 +26,27 @@
 \date    12.05.2025
 \version 1.0
 \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
-           This program is free software : you can redistribute it and /or modify it
-           under the terms of the GNU General Public License, version 3.
-           See < https ://www.gnu.org/licenses/>.
 
-   \see Employee_i.cpp
-   \see DestroyableInterface_i
-   \see Organization::Person(IDL)
-   \see Organization::Employee(IDL)
+\licenseblock{GPL-3.0-or-later}
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License, version 3,
+as published by the Free Software Foundation.
 
-   \note This Software is part of the adecc Scholar project – Free educational materials for modern C++.
-   */
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+\endlicenseblock
+
+\see Employee_i.cpp
+\see DestroyableInterface_i
+\see Organization::Person(IDL)
+\see Organization::Employee(IDL)
+
+\note This Software is part of the adecc Scholar project – Free educational materials for modern C++.
+*/
 
 #pragma once
 
@@ -48,7 +58,6 @@
 #include <tao/PortableServer/PortableServer.h>
 
    /**
-     \class Person_i
      \brief CORBA servant implementation for the IDL interface `Organization::Person`.
     
      \details This class provides a concrete CORBA servant for the base `Person` interface,
@@ -103,7 +112,6 @@ public:
 
 
 /**
-  \class
   \brief   Concrete servant class implementing the CORBA interface `Organization::Employee`.
   \details This class maps an `EmployeeData` structure to the CORBA `Employee` interface.
            It supports access to basic employee attributes and is bound to a POA (Portable Object Adapter).

@@ -14,8 +14,21 @@
 
   \copyright Copyright © adecc Systemhaus GmbH 2021–2025
 
-  \license This project is mostly licensed under the GNU General Public License v3.0.
-           See the LICENSE file for details.
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
 
   \version 1.0
   \date    31.05.2025

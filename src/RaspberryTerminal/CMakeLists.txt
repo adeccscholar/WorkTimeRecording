@@ -21,6 +21,6 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE IDL_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})
 
 

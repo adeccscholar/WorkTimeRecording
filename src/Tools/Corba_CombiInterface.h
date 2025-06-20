@@ -3,46 +3,55 @@
 
 /**
   \file
-  \brief Generic CORBA Client/Server composition with wrapper concepts.
-
+  \brief Unified CORBA Client/Server Composition via Modern C++ Metaprogramming
+ 
   \details
-  This header defines a generic, type-safe and composable system for
-  managing CORBA stubs and skeletons via wrapper templates and concepts.
-
-  \details
-  Its provides type-safe wrappers and composition tools to combine CORBA stubs and skeletons
-  into a single class through template metaprogramming. Core features include:
-   - Wrapper types for CORBA stubs (\c Stub) and skeletons (\c Skel)
-   - Concepts to ensure compile-time interface compliance
-   - Compile-time type filtering and extraction using typelists
-   - A generic \c CORBAClientServer class that automatically inherits from appropriate base classes
-
-  \details
-  A class CORBAClientServer<CORBAStub ...stubs, CORBASkeleton ...skels> can't work
-  because you need two paramter packs. The Rule of Greedy matching here and make
-  it impossible, the Rule of fair matching for template pack deduction too.
-  This is often called as Corner of Hell. And yes, we are in the Hell really
-  when we arrive this point in the meta programming.
-  \see Andrei Alexandrescu: https://www.youtube.com/watch?v=va9I2qivBOA
-
-  \date 16.06.2025
-  \version 1.0
-
+  This header defines an advanced and type-safe composition mechanism for combining
+  CORBA client stubs and server skeletons into a single cohesive unit using modern
+  C++ features including Concepts, SFINAE, conditional inheritance, and compile-time filtering.
+ 
+  The centerpiece of this approach is the \c CORBAClientServer template class, which
+  accepts wrapper types representing either CORBA stubs or skeletons. These wrapper
+  types are evaluated and filtered at compile time to determine which roles are present.
+ 
+  Key goals and highlights:
+  - Full compile-time validation (interface roles, stub/skeleton counts)
+  - Avoidance of ambiguous template pack deduction via type wrappers and filtering
+  - Runtime-safe construction and access with static_assert contract enforcement
+  - Composability and reusability for TAO-based distributed systems
+ 
+  \note
+  This approach solves a well-known limitation of C++ templates — the inability to
+  deduce and distinguish multiple variadic parameter packs (e.g., for stubs vs skeletons).
+  This restriction is often referred to as a corner of "template hell" and is
+  circumvented here using role wrappers and compile-time list filtering.
+ 
+  \see
+  For further reading: Andrei Alexandrescu - "Template Normal Programming"
+  https://www.youtube.com/watch?v=va9I2qivBOA
+ 
   \author Volker Hillmann (adecc Systemhaus GmbH)
+  \version 1.0
+  \date 16.06.2025
+ 
+  \copyright
+  Copyright © 2020–2025 adecc Systemhaus GmbH
+ 
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
 
-  \copyright Copyright © adecc Systemhaus GmbH 2021–2025
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
 
-  \license This program is free software: you can redistribute it and/or modify it
-           under the terms of the GNU General Public License, version 3,
-           as published by the Free Software Foundation.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
 
-           This program is distributed in the hope that it will be useful,
-           but WITHOUT ANY WARRANTY; without even the implied warranty of
-           MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-           See the GNU General Public License for more details.
-
-           You should have received a copy of the GNU General Public License
-           along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
 
  */
 #pragma once
@@ -221,9 +230,42 @@ struct length<TypeList<Ts...>> {
 };
 
 /**
- * \brief Composed CORBA client/server base class.
- * \tparam Roles Variadic list of role wrappers (Stub<T> or Skel<T>)
- * \details Based on the given wrapper roles, this class deduces whether to inherit from CORBAClient, CORBAServer, or both.
+  \brief Composed CORBA client/server base class.
+  \tparam Roles Variadic list of role wrappers (Stub<T> or Skel<T>)
+  \details Based on the given wrapper roles, this class deduces whether to inherit from CORBAClient, CORBAServer, or both.
+
+  \details
+  This class enables clean and type-safe declaration of CORBA client and server combinations
+  in a single unit. It automatically determines which roles are present by filtering the
+  template parameters using concepts and metafunctions:
+ 
+  - \c Stub<T> is a wrapper for a CORBAStub
+  - \c Skel<T> is a wrapper for a CORBASkeleton
+ 
+  From these wrappers, the base classes CORBAClient and CORBAServer are conditionally
+  selected and inherited from. If neither type is present, a fallback base class ORBBase
+  is used. This guarantees valid inheritance in all cases while providing compile-time
+  role introspection.
+ 
+  \section CORBAClientServer_CompileTimeSafety Compile-Time Guarantees
+  - If stub or skeleton counts mismatch with the underlying implementation, a static_assert fails.
+  - If neither skeletons nor stubs are present, construction is ill-formed and rejected by overload resolution.
+  - Method accessors (e.g., \c get_stub) are protected with static_assert to prevent invalid access paths.
+ 
+  \section CORBAClientServer_TechnicalNotes Implementation Techniques
+  - \c std::conditional_t selects base types depending on filter results
+  - \c TypeList and \c Filter are used to split the Roles... into stubs and skeletons
+  - \c extract_inner resolves the actual CORBAClient<Ts...> or CORBAServer<Ts...> type
+  - C++20 Concepts are used to statically enforce wrapper compliance
+  - Constructor overloads are guarded with \c requires clauses for role configurations
+ 
+  \section CORBAClientServer_Example Example Usage
+  \code
+  CORBAClientServer<Skel<MyService_i>, Stub<MyService>> server("MyApp", argc, argv, "MyServiceIOR");
+  \endcode
+ 
+  \note All role separation, interface validation, and structure deduction happens entirely at compile-time.
+  No runtime reflection or type inspection is needed.
  */
 template<CORBAStubOrSkeletonWrapper... Roles>
 class CORBAClientServer : virtual public std::conditional_t<length<typename Filter<TypeList<Roles...>, is_skeleton>::type>::value != 0,

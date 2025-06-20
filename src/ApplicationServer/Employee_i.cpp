@@ -34,10 +34,20 @@
   \version 1.0
 
   \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
-             This program is free software: you can redistribute it and/or modify it
-             under the terms of the GNU General Public License, version 3.
-             See <https://www.gnu.org/licenses/>.
 
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
   \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
  */
 
@@ -50,7 +60,7 @@
 #include <print>
 #include <stdexcept>
 
- /**
+/**
   \brief Constructs a `Person_i` servant with basic identity data.
  
   \details Initializes a CORBA servant representing a person. The constructor receives
@@ -62,7 +72,7 @@
   \param poa A pointer to the `PortableServer::POA` instance managing the servant.
  
   \note The constructor logs creation with trace level 4 to aid in tracing and debugging servant lifecycles.
- */
+*/
 Person_i::Person_i(PersonData const& person, PortableServer::POA_ptr poa) : DestroyableInterface_i(poa) {
    personID_  = person.personID;
    firstname_ = person.firstname;
@@ -77,7 +87,7 @@ Person_i::Person_i(PersonData const& person, PortableServer::POA_ptr poa) : Dest
   \details The destructor logs when the `Person_i` servant is being destroyed.
            This is particularly useful in development and testing to ensure that CORBA
            servants are properly cleaned up and no memory leaks remain.
- */
+*/
 Person_i::~Person_i() {
    log_trace<4>("[Person_i {}] Object destroyed for ID: {}", ::getTimeStamp(), personId());
    }

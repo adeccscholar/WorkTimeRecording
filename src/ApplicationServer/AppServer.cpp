@@ -29,8 +29,21 @@
  
   \copyright Copyright © adecc Systemhaus GmbH 2021–2025
  
-  \license This project is mostly licensed under the GNU General Public License v3.0.
-           For more information, see the LICENSE file.
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
  
   \version 1.0
   \date    09.05.2025
@@ -93,8 +106,6 @@ std::atomic<bool> shutdown_requested = false;
            to `true`, signaling the application to begin a graceful shutdown procedure.
  
   \param sig_num The signal number received (e.g., SIGINT, SIGTERM).
- 
-  \return None.
  
   \pre  This function must be registered using `std::signal` or an equivalent mechanism.
   \post The global variable `shutdown_requested` will be set to `true`.

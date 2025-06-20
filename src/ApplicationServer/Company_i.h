@@ -2,23 +2,35 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /**
- * \file
- * \brief CORBA servant implementation header for Organization::Company interface.
- *
- * \details This file declares the `Company_i` class, which implements the CORBA interface `Organization::Company`.
- *          It provides functionality to access company data and manage employee objects.
- *          Employees are represented using the placeholder type `EmployeeData` and stored in an in-memory map.
- *          Each employee object is instantiated as a separate CORBA servant via the `Employee_i` implementation.
- *
- * \version 1.0
- * \date    16.05.2025
- * \author  Volker Hillmann (adecc Systemhaus GmbH)
- * \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
- *            This program is free software: you can redistribute it and/or modify it
- *            under the terms of the GNU General Public License, version 3.
- *            See <https://www.gnu.org/licenses/>.
- *
- * \note This software is part of the adecc Scholar project – Free educational materials for modern C++.
+  \file
+  \brief CORBA servant implementation header for Organization::Company interface.
+ 
+  \details This file declares the `Company_i` class, which implements the CORBA interface `Organization::Company`.
+           It provides functionality to access company data and manage employee objects.
+           Employees are represented using the placeholder type `EmployeeData` and stored in an in-memory map.
+           Each employee object is instantiated as a separate CORBA servant via the `Employee_i` implementation.
+ 
+  \version 1.0
+  \date    16.05.2025
+  \author  Volker Hillmann (adecc Systemhaus GmbH)
+  \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
+
  */
 
 #pragma once
@@ -42,7 +54,6 @@ using namespace std::string_literals;
 using employee_test_data_ty = std::map<CORBA::Long, EmployeeData>;
 
 /**
-  \class 
   \brief CORBA servant implementation for Organization::Company.
  
   \details This class implements the Organization::Company CORBA interface. It provides methods
@@ -67,7 +78,7 @@ public:
    /**
      \brief Constructor for the Company_i class.
      \param company_poa POA used to activate the company servant.
-     \param emloyee_poa POA used to activate employee servants.
+     \param employee_poa POA used to activate employee servants.
     */
    Company_i(PortableServer::POA_ptr company_poa, PortableServer::POA_ptr employee_poa);
 

@@ -9,18 +9,20 @@
            employee attributes, personal information, and service operations.
  
   \copyright Copyright © 2025 adecc Systemhaus GmbH  
-             This program is free software: you can redistribute it and/or modify it  
-             under the terms of the GNU General Public License, version 3,
-             as published by the Free Software Foundation.
- 
-             This program is distributed in the hope that it will be useful,
-             but WITHOUT ANY WARRANTY; without even the implied warranty of
-             MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-             See the GNU General Public License for more details.
-			
-             You should have received a copy of the GNU General Public License
-             along with this program. If not, see <https://www.gnu.org/licenses/>.
- 
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
   \note This Software is part of the adecc Scholar project – Free educational materials for modern C++.
  */
  
@@ -56,7 +58,7 @@ module Organization {
 
 
     /**
-      \brief Full employee record structure for direct access.
+     \brief Full employee record structure for direct access.
 	  \details This structure exists for the stub and will transfered when used as return type. This is like a stateless use of Corba.
 	  \details Person and Employee Data are combined for an easier use.
     */
@@ -132,7 +134,6 @@ module Organization {
 	typedef sequence<Employee> EmployeeSeq;
 
     /**
-      \interface
       \brief CORBA interface representing the central company service.
      
       \details This is the main CORBA service interface that provides access to employee-related

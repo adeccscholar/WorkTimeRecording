@@ -17,9 +17,20 @@
   \date    12.05.2025
   \author  Volker Hillmann (adecc Systemhaus GmbH)
   \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
-             This program is free software: you can redistribute it and/or modify it
-             under the terms of the GNU General Public License, version 3.
-             See <https://www.gnu.org/licenses/>.
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
  
   \note This software is part of the adecc Scholar project – Free educational materials for modern C++.
  */
@@ -36,7 +47,6 @@
 using namespace std::string_literals;
 
 /**
-  \struct 
   \brief Basic person information used for identification and naming.
  
   \details This structure holds minimal person-related attributes and is intended as
@@ -50,7 +60,6 @@ struct PersonData {
    };
 
 /**
-  \struct 
   \brief Extended person structure used for simulating employee records.
  
   \details In addition to the basic personal information, this structure includes
@@ -63,8 +72,13 @@ struct EmployeeData : public PersonData {
    CORBA::Boolean isActive               = false;        ///< Employment status (active/inactive)
    };
 
-// startDate to chrono
-
+/**
+ \brief copy an EmployeeData Element to a CORBA Organization::EmployeeData_ptr
+ \details intern used function to convert / copy a element of the type EmployeeData to
+ an element of Organization::EmployeeData and return it to the CORBA middleware as Pointer.
+ \param data const reference to an element of EmployeeData
+ \returns Pointer to an Organization::EmployeeData structure from the idl
+*/
 inline Organization::EmployeeData* createFrom(EmployeeData const& data) {
    Organization::EmployeeData* employee_data = new Organization::EmployeeData();
    employee_data->personId  = data.personID;

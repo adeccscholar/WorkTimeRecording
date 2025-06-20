@@ -6,7 +6,7 @@
  \brief Doxygen License Overview Page for the adecc Scholar project
 
  \details
- \subpage licenses "License Overview and Usage"
+ Containes the documentation page \ref licenses "License Overview and Usage"
  */
 
 /**

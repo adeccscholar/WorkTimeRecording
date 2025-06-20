@@ -6,7 +6,7 @@
   \brief Doxygen Documentation Page – Organization IDL Interface
   
   \details
-  \subpage idl_organization "Organization Module – IDL Specification"
+  Contains documentation page idl_organization 
  */
 
 /**

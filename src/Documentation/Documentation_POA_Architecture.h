@@ -6,7 +6,7 @@
   \brief Doxygen Documentation Page for POA Architecture
  
   \details
-  \subpage poa_usage "Portable Object Adapter (POA) Usage in CORBA Project"
+  Contains the Documentation page \ref poa_usage "Portable Object Adapter (POA) Usage in CORBA Project"
  */
 
 /**

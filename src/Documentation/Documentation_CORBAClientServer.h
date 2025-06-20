@@ -1,6 +1,12 @@
 // SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
 // SPDX-License-Identifier: GPL-3.0-or-later
+/**
+  \file
+  \brief Doxygen Documentation Page – CORBAClientServer Design and Mechanism
 
+  \details
+  Contains documentation page CORBAClientServerDesign
+ */
 /**
   \page CORBAClientServerDesign CORBAClientServer Design and Mechanism
 
