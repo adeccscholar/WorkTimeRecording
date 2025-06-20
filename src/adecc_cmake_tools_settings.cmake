@@ -26,33 +26,54 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(PLATFORM "Android")
 endif()
 
-macro(clone_repository REPRO_PATH REPRO_NAME REPRO_URL)
+
+
+macro(clone_repository REPRO_PATH REPRO_NAME REPRO_URL UPDATE_IF_EXISTS)
    if(DEFINED ${REPRO_PATH})
       if(NOT EXISTS ${${REPRO_PATH}})
          message("Cloning ${REPRO_NAME} repository ...")
          execute_process(
             COMMAND git clone ${REPRO_URL} ${${REPRO_PATH}} 
             RESULT_VARIABLE GIT_CLONE_RESULT 
-            )
-         if(NOT ${GIT_CLONE_RESULT} EQUAL "0")
+         )
+         if(NOT ${GIT_CLONE_RESULT} EQUAL 0)
             message(FATAL_ERROR "Failed to clone ${REPRO_NAME} repository. Aborting.")
+         endif()
+      else()
+         if(${UPDATE_IF_EXISTS})
+            message("Repository ${REPRO_NAME} already exists. Updating ...")
+            execute_process(
+               COMMAND git pull
+               WORKING_DIRECTORY ${${REPRO_PATH}}
+               RESULT_VARIABLE GIT_PULL_RESULT
+            )
+            if(NOT ${GIT_PULL_RESULT} EQUAL 0)
+               message(WARNING "Failed to update ${REPRO_NAME} repository.")
+            endif()
+         else()
+            message("Repository ${REPRO_NAME} already exists. Skipping update.")
          endif()
       endif()
    else()
-      message(WARNING, "${REPRO_PATH} is not defined. Skipping repository cloning.")
+      message(WARNING "${REPRO_PATH} is not defined. Skipping repository cloning.")
    endif()
 endmacro()
 
 
-macro(add_include_directory_if_exists TARGET INCLUDE_PATH) 
+macro(add_include_directory_if_exists INCLUDE_PATH LIBRARY_NAME)
    if(DEFINED ${INCLUDE_PATH})
       if(EXISTS ${${INCLUDE_PATH}})
-         target_include_directories(${PROJECT_NAME} PUBLIC ${${INCLUDE_PATH}})
+         add_library(${LIBRARY_NAME} INTERFACE)
+         target_include_directories(${LIBRARY_NAME} INTERFACE ${${INCLUDE_PATH}})
       else()
-         message(WARNING "Include directory ${${INCLUDE_PATH}} does not exists.")
+         message(WARNING "Include directory ${${INCLUDE_PATH}} does not exist.")
       endif()
+   else()
+      message(WARNING "${INCLUDE_PATH} is not defined.")
    endif()
 endmacro()
+
+
 
 # extract the hostname for individual settings
 execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME OUTPUT_STRIP_TRAILING_WHITESPACE)

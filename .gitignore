@@ -45,3 +45,5 @@ Release
 Debug
 out
 .vs
+
+/src/external/
