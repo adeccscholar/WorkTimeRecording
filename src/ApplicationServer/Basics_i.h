@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+﻿// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
 // SPDX-License-Identifier: GPL-3.0-or-later
 /**
   \file
@@ -19,7 +19,7 @@
   \author Volker Hillmann (adecc Systemhaus GmbH)
   \date    06.06.2025
   \version 1.0
-  \copyright Copyright � 2020 - 2025 adecc Systemhaus GmbH
+  \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
              This program is free software: you can redistribute it and/or modify it
              under the terms of the GNU General Public License, version 3.
              See <https://www.gnu.org/licenses/>.

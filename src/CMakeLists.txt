@@ -17,9 +17,15 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 
 # Add the interface library for Tools
 add_library(ProjectTools INTERFACE)
+add_library(adeccScholar INTERFACE)
+add_library(adeccTools INTERFACE)
+add_library(adeccDatabase INTERFACE)
 
 # Register the include directory with this interface library
 target_include_directories(ProjectTools INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Tools)
+target_include_directories(adeccScholar INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/adecc_Scholar)
+target_include_directories(adeccTools INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/adecc_Tools)
+target_include_directories(adeccDatabase INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/adecc_Database)
 
 # Add subprojects
 add_subdirectory(IDLGen)

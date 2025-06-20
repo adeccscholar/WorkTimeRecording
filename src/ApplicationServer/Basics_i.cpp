@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+ï»¿// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 /**
@@ -16,7 +16,7 @@
   \version 1.0
   \date    12.05.2025
   \author Volker Hillmann (adecc Systemhaus GmbH)
-  \copyright Copyright © 2020–2025 adecc Systemhaus GmbH
+  \copyright Copyright Â© 2020â€“2025 adecc Systemhaus GmbH
              This program is free software: you can redistribute it and/or modify it
              under the terms of the GNU General Public License, version 3.
              See <https://www.gnu.org/licenses/>.
@@ -59,7 +59,7 @@ DestroyableInterface_i::~DestroyableInterface_i() {
            effectively removing the object from the active object map. If the object is already inactive,
            the exception is caught and logged.
  
-           After deactivation, the method calls `_remove_ref()` which decrements the servant’s reference count.
+           After deactivation, the method calls `_remove_ref()` which decrements the servantâ€™s reference count.
            When it reaches zero, the object is deleted.
  
   \note On the client side, a concept named `CORBAStubWithDestroy` is defined. It builds upon the
@@ -87,7 +87,7 @@ void DestroyableInterface_i::destroy() {
       log_error("[DestroyableInterface_i {}] Exception during deactivate_object: {}", ::getTimeStamp(), toString(ex));
       }
 
-   _remove_ref();  // Führt zu delete this bei RefCount 0
+   _remove_ref();  // FÃ¼hrt zu delete this bei RefCount 0
    }
 
 /**

@@ -54,6 +54,9 @@
 
 #include "Tools.h"
 
+#include <adecc_Database/MyDatabase.h>
+#include <adecc_Database/MyDatabaseExceptions.h>
+
 #include "OrganizationC.h"
 
 #include "Company_i.h"
@@ -66,6 +69,9 @@
 #include <tao/PortableServer/LifespanPolicyA.h>
 
 #include <orbsvcs/CosNamingC.h>
+
+#include <QtCore/QCoreApplication>
+#include <QHostInfo>
 
 #include <iostream>
 #include <sstream>
@@ -96,6 +102,37 @@ using namespace std::string_literals;
   \see signal_handler
  */
 std::atomic<bool> shutdown_requested = false;
+
+using concrete_db_server = TMyMSSQL;
+using concrete_framework = TMyQtDb<concrete_db_server>;
+using concrete_db_connection = TMyDatabase<TMyQtDb, concrete_db_server>;
+using concrete_query = TMyQuery<TMyQtDb, concrete_db_server>;
+
+
+void Connect(concrete_db_connection& database,
+             std::string const& strDatabase, std::string const& strServer, std::string const& strDomain,
+             std::string const& strInstance) {
+
+   auto BuildServerName = [&strDomain](std::string const& strServer, std::string const& strInstance) {
+      if (strDomain.empty()) {
+         if (strInstance.empty()) return strServer;
+         else return strServer + "\\"s + strInstance;
+         }
+      else {
+         if (strInstance.empty()) return strServer + "."s + strDomain;
+         else return strServer + "."s + strDomain + "\\"s + strInstance;
+         }
+      };
+
+   TMyCredential my_cred;
+
+   database = { TMyMSSQL { strDatabase } };
+   my_cred = { "", "", true };
+   
+   database += std::forward<TMyCredential>(my_cred);
+   database.Open();
+   std::println(std::cout, "Application is connected to: {}", database.GetInformations());
+}
 
 
 /**
@@ -128,6 +165,10 @@ void signal_handler(int sig_num) {
 static_assert(CORBASkeleton<Company_i>, "Company_i erfüllt nicht das CORBASkeleton-Concept");
 
 int main(int argc, char *argv[]) {
+   QCoreApplication a(argc, argv);
+
+
+
 
    // -----------------------------------------------------------------------------------
    // (1) Setup: Install signal handlers for graceful shutdown on SIGINT or SIGTERM
@@ -138,8 +179,32 @@ int main(int argc, char *argv[]) {
    const std::string strAppl = "Time Tracking App Server"s;
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);  
+   QCoreApplication::addLibraryPath("D:/Qt/6.6.2/msvc2019_64/plugins");
 #endif
    std::string strName = "GlobalCorp/CompanyService"s;
+
+   // Determine computer name and network domain
+   QString   fullHostName = QHostInfo::localHostName();
+   QHostInfo hostInfo = QHostInfo::fromName(fullHostName);
+   std::string hostname = hostInfo.hostName().toStdString(); // computer name
+   std::string localDomain = hostInfo.localDomainName().toStdString(); // used network domain, does not work under Windows 
+
+   std::println("Host: {}", hostname);
+   std::println("Domäne: {}", localDomain);
+
+   concrete_db_connection database;
+   Connect(database, "Test_Personen"s, "DESKTOP-UR8733U"s, localDomain, ""s);
+
+   auto query = database.CreateQuery("SELECT ID, Name, Firstname, BirthName, FormOfAddress, "s +
+      "FamilyStatus, FamilyStatusSince, Birthday, Notes, FullName "s +
+      "FROM Person "s
+      "WHERE Name = :keyName AND Firstname = :keyFirstname"s);
+
+   if (query.Execute({ { "keyName", "Braun", true },   {"keyFirstname", "Isabelle", true } }); !query.IsEof()) {
+      std::println("{}: {}", query.Get <int>("ID").value_or(0), query.Get<std::string>("FullName").value_or(""));
+      }
+
+
    {
       /*
       CORBAClientServer<Skel<Company_i>, Stub<Organization::Company>> wrapper("CORBA Factories"s, argc, argv, "GlobalCorp/CompanyService"s );

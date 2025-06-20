@@ -44,6 +44,8 @@
 #include "Tools.h"
 #include "my_logging.h"
 
+#include <adecc_Database/MyDatabase.h>
+
 #include <ranges>
 #include <numeric>
 #include <algorithm>
