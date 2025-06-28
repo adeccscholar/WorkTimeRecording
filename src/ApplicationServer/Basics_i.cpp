@@ -92,11 +92,10 @@ void DestroyableInterface_i::destroy() {
 
 /**
   \brief Assigns the POA Object ID for this servant.
- 
   \param oid ObjectId assigned by POA during servant activation.
- 
   \note This ID is required to allow proper deactivation via `destroy()`.
- */void DestroyableInterface_i::set_oid(PortableServer::ObjectId const& oid) {
+ */
+void DestroyableInterface_i::set_oid(PortableServer::ObjectId const& oid) {
    oid_ = oid;
    }
 

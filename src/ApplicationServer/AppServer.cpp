@@ -108,11 +108,11 @@ using concrete_framework = TMyQtDb<concrete_db_server>;
 using concrete_db_connection = TMyDatabase<TMyQtDb, concrete_db_server>;
 using concrete_query = TMyQuery<TMyQtDb, concrete_db_server>;
 
-
 void Connect(concrete_db_connection& database,
              std::string const& strDatabase, std::string const& strServer, std::string const& strDomain,
              std::string const& strInstance) {
 
+   /*
    auto BuildServerName = [&strDomain](std::string const& strServer, std::string const& strInstance) {
       if (strDomain.empty()) {
          if (strInstance.empty()) return strServer;
@@ -123,7 +123,7 @@ void Connect(concrete_db_connection& database,
          else return strServer + "."s + strDomain + "\\"s + strInstance;
          }
       };
-
+   */
    TMyCredential my_cred;
 
    database = { TMyMSSQL { strDatabase } };
@@ -207,8 +207,8 @@ int main(int argc, char *argv[]) {
 
    {
       /*
-      CORBAClientServer<Skel<Company_i>, Stub<Organization::Company>> wrapper("CORBA Factories"s, argc, argv, "GlobalCorp/CompanyService"s );
-      //CORBAClientServer<Skel<Company_i>> wrapper("CORBA Factories"s, argc, argv);
+      //CORBAClientServer<Skel<Company_i>, Stub<Organization::Company>> wrapper("CORBA Factories"s, argc, argv, "GlobalCorp/CompanyService"s );
+      CORBAClientServer<Skel<Company_i>> wrapper("CORBA Factories"s, argc, argv);
 
       CORBA::PolicyList empl_pol;
       empl_pol.length(2);
@@ -233,7 +233,8 @@ int main(int argc, char *argv[]) {
    }
    
    try {
-      CORBAServer<Company_i> server(strAppl, argc, argv, std::chrono::milliseconds(500));
+      //CORBAServer<Company_i> server(strAppl, argc, argv, std::chrono::milliseconds(500));
+      CORBAClientServer<Skel<Company_i>> server("CORBA Factories"s, argc, argv);
  
       auto CreateTransient = [](PortableServer::POA_ptr poa) {
          CORBA::PolicyList pol_list;

@@ -35,7 +35,7 @@
  */
 #include "Tools.h"
 #include "my_logging.h"
-#include "Corba_Interfaces.h"
+#include "Corba_CombiInterface.h"
 
 #include "Employee_Tools.h"
 
@@ -70,12 +70,12 @@ int main(int argc, char *argv[]) {
    // Platzhalter für Variable
    log_state("[{} {}] Client Testprogram for Worktime Tracking started.", strMainClient, ::getTimeStamp());
    try {
-      CORBAClient<Organization::Company> factories("CORBA Factories", argc, argv, "GlobalCorp/CompanyService"s);
+      CORBAClientServer<Stub<Organization::Company>> factories("CORBA Factories", argc, argv, "GlobalCorp/CompanyService"s);
 
       for (auto const& name : factories.get_names()) std::println(std::cout, "{}", name);
 
       //auto company = [&factories]() { return std::get<0>(factories.vars());  };
-      auto company = [&factories]() { return factories.get<0>();  };
+      auto company = [&factories]() { return factories.client().get<0>();  };
       std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
       GetEmployee(company(), 105);

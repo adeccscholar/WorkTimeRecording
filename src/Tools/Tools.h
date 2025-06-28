@@ -94,7 +94,9 @@ using namespace std::string_view_literals;
  */
 inline std::string getTimeStamp(std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
    //auto const cz_ts = std::chrono::locate_zone("Europe/Berlin"sv)->to_local(now);
-   auto const cz_ts = std::chrono::current_zone()->to_local(now);
+   //auto const cz_ts = std::chrono::current_zone()->to_local(now);
+   auto const cz_ts = now;
+
    auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
    return std::format("{:%d.%m.%Y %X},{:03d}", cz_ts, millis.count());
 }

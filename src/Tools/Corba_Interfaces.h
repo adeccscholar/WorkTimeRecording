@@ -779,6 +779,19 @@ public:
 };
 
 
+/*
+* 
+* Corner of Hell
+* 
+template <CORBAStub... Stubs, CORBASkeleton... Skels>
+class CORBAClientServer : public CORBAClient<Stubs>, public CORBAServer<Skels> {
+
+
+template <typename... tys>
+class CORBAClientServer : public CORBAClient<Stubs>, public CORBAServer<Skels> {
+
+*/
+
 
 /**
   \brief RAII wrapper for CORBA stubs supporting the 'destroy()' method.

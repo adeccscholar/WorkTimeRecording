@@ -1,5 +1,8 @@
 
+#include "Sensoring.h"
+
 #include "Tools.h"
+
 #include "OrganizationC.h"
 #include "Corba_Interfaces.h"
 
@@ -20,12 +23,24 @@ int main(int argc, char* argv[]) {
 #endif
    std::println("Time Tracking Terminal with Raspberry PI");
    
+   SensorReading sensor_reading;
+
+   sensor_reading.initExternDisplay();
+   sensor_reading.readSensors();
+
+   TimeTracking tracking(sensor_reading);
+   tracking.Init();
+   tracking.Test_LEDs();
+
+
    try {
+      /*
       CORBAClient<Organization::Company> factories("CORBA Factories", argc, argv, "GlobalCorp/CompanyService"s);
       auto company = [&factories]() { return factories.get<0>();  };
       auto empl = make_destroyable(company()->getEmployee(105));
       std::println(std::cout, "ID: {:>4}, Name: {:<25}, Status: {:<3}, Salary: {:>10.2f}", 
                  empl->personId(), toString(empl->getFullName()), (empl->isActive() ? "Yes" : "No"), empl->salary());
+      */
       }
    catch (Organization::EmployeeNotFound const& ex) {
       // Safety net, in case the exception occurs outside the specific try-catch block
