@@ -42,7 +42,9 @@ add_subdirectory(ApplicationServer)
 add_subdirectory(Client)
 
 if(PLATFORM STREQUAL "Windows")
-  add_subdirectory(WeatherServer)
+  add_subdirectory(BoostTools)
+  add_subdirectory(WeatherClient_intro)
+  add_subdirectory(WeatherClient)
 endif()
 
 if(PLATFORM STREQUAL "Raspberry")
