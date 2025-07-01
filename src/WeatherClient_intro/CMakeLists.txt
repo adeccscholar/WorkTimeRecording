@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
 
-project(Weather_Server)
+project(Weather_Client_Intro)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +10,7 @@ add_definitions(-DBUILD_WITH_QT)
 
 include (../adecc_boost_settings.cmake)
 
-set(PROJECT_SOURCES WeatherServer.cpp)
+set(PROJECT_SOURCES WeatherClient_pre.cpp)
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 configure_boost_for_target(${PROJECT_NAME} 1.87 "system;json")

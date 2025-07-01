@@ -1,0 +1,33 @@
+# Basierend auf LLVM, aber mit Anpassungen für Ratliff-Stil
+BasedOnStyle: LLVM
+
+# Verwende Tabulatoren für Einrückung
+UseTab: ForIndentation
+IndentWidth: 3
+TabWidth: 3
+ContinuationIndentWidth: 3
+
+# Klammern im Attach-Stil (auf gleicher Zeile)
+BreakBeforeBraces: Attach
+BreakBeforeElse: true
+
+# Kurze Statements auf einer Zeile erlauben (optional)
+AllowShortIfStatementsOnASingleLine: true
+AllowShortElseIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Inline
+
+# Stilistische Vorlieben
+IndentCaseLabels: true
+PointerAlignment: Left
+SpaceAfterCStyleCast: true
+
+# Optional: leserliche Formatierung und Ordnung
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+ReflowComments: true
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# Optional: höhere Zeilenlänge erlaubt
+ColumnLimit: 120
