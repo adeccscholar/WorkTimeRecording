@@ -11,9 +11,11 @@ add_definitions(-DBUILD_WITH_QT)
 # include (../adecc_tao_settings.cmake)
 include (../adecc_boost_settings.cmake) 
 
-set(PROJECT_SOURCES WeatherClient.cpp WeatherData.cpp WeatherData.h)
+set(PROJECT_SOURCES WeatherClient.cpp )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
+
+add_dependencies(${PROJECT_NAME} WeatherAPI)
 
 # configure_boost_for_target(${PROJECT_NAME} 1.87 "system;json")
 					
@@ -23,7 +25,7 @@ add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools BoostTools)
+target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools BoostTools WeatherAPI)
 
 # target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools adeccDatabase adeccTools)
 # target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})

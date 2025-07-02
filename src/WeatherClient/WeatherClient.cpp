@@ -16,60 +16,6 @@
 using namespace std::string_literals;
 
 
-/**
-  \brief Holt Wetterdaten im JSON-Format (täglich oder stündlich) von Open-Meteo.
- 
-  \param latitude Breitengrad
-  \param longitude Längengrad
-  \param forecast_days Anzahl der Vorhersagetage (1-16)
-  \param resolution Auflösung (täglich oder stündlich)
-  \return JSON-Antwort als String
- */
-std::string GetUrl(WeatherResolution resolution, double latitude, double longitude, int forecast_days) {
-   if (latitude < -90.0 || latitude > 90.0) {
-      throw std::range_error("Latitude must be between -90 and 90.");
-      }
-   if (longitude < -180.0 || longitude > 180.0) {
-      throw std::range_error("Longitude must be between -180 and 180.");
-      }
-   if (forecast_days < 1 || forecast_days > 16) {
-      throw std::range_error("Forecast days must be between 1 and 16.");
-      }
-
-   std::string endpoint = std::format("/v1/forecast?latitude={}&longitude={}&timezone=auto", latitude, longitude);
-
- 
-   switch (resolution) {
-      case WeatherResolution::Current_Extended:
-         endpoint += "&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,rain,snowfall,"
-                     "weathercode,pressure_msl,surface_pressure,cloudcover,windspeed_10m,windgusts_10m,"
-                     "winddirection_10m,uv_index,shortwave_radiation,is_day";
-         break;
-      case WeatherResolution::Daily:
-         endpoint += std::format("&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,"
-                                 "weathercode,windspeed_10m_max,uv_index_max,temperature_2m_mean,"
-                                 "apparent_temperature_max,apparent_temperature_min,sunshine_duration,"
-                                 "precipitation_hours,windgusts_10m_max,shortwave_radiation_sum,"
-                                 "et0_fao_evapotranspiration,rain_sum,snowfall_sum,winddirection_10m_dominant&"
-                                 "forecast_days={}", forecast_days);
-         break;
-      case WeatherResolution::Hourly:
-         endpoint += std::format("&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,apparent_temperature,"
-                                 "precipitation,rain,showers,snowfall,weathercode,pressure_msl,surface_pressure,"
-                                 "cloudcover,cloudcover_low,cloudcover_mid,cloudcover_high,shortwave_radiation,"
-                                 "direct_radiation,diffuse_radiation,windspeed_10m,windgusts_10m,"
-                                 "winddirection_10m,uv_index,is_day&forecast_days={}", forecast_days);
-         break;
-      case WeatherResolution::Current:
-         endpoint += "&current_weather=true";
-         break;
-      default:
-         std::unreachable();
-      }
-   return endpoint;
-   }
-
-
 int main() {
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);
@@ -78,8 +24,7 @@ int main() {
    std::println("Testprogram to use the open-meteo.com Rest API");
    try {
       const double latitude = 52.5366923, longitude = 13.2027663;
-      HttpRequest server("api.open-meteo.com");
-
+      HttpRequest server(GetServer());
       auto json = server.perform_get(GetUrl(WeatherResolution::Current_Extended, latitude, longitude, 1));
       const auto meta              = parse<WeatherMeta>(json);
       print(meta);

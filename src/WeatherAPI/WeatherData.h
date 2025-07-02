@@ -1,5 +1,17 @@
 #pragma once
 
+#if defined(_WIN32) || defined(__CYGWIN__)
+#  ifdef WEATHERAPI_BUILD_DLL
+#    define WEATHERAPI_API __declspec(dllexport)
+#  elif defined(WEATHERAPI_USE_DLL)
+#    define WEATHERAPI_API __declspec(dllimport)
+#  else
+#    define WEATHERAPI_API
+#  endif
+#else
+#  define WEATHERAPI_API __attribute__((visibility("default")))
+#endif
+
 #include <optional>
 #include <string>
 #include <utility>
@@ -129,14 +141,14 @@ void apply_rules(std::ostringstream& out, std::optional<ty> const& value, RuleSe
       }
    }
 
-std::string wind_direction_text(std::optional<double> deg);
-std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh);
-std::string describe_uv_index(std::optional<double> uv_index, bool German = true);
-std::string describe_weather_code(std::optional<int> code);
-std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool german = true);
+WEATHERAPI_API std::string wind_direction_text(std::optional<double> deg);
+WEATHERAPI_API std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh);
+WEATHERAPI_API std::string describe_uv_index(std::optional<double> uv_index, bool German = true);
+WEATHERAPI_API std::string describe_weather_code(std::optional<int> code);
+WEATHERAPI_API std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool german = true);
 
-void print(WeatherMeta const& meta);
-void print(WeatherCurrentExtended const& w);
-void print(WeatherCurrent const& wc);
-void print(std::vector<WeatherDay> const& data);
-void print(std::vector<WeatherHour> const& data);
+WEATHERAPI_API void print(WeatherMeta const& meta);
+WEATHERAPI_API void print(WeatherCurrentExtended const& w);
+WEATHERAPI_API void print(WeatherCurrent const& wc);
+WEATHERAPI_API void print(std::vector<WeatherDay> const& data);
+WEATHERAPI_API void print(std::vector<WeatherHour> const& data);

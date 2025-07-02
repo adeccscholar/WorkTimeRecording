@@ -31,7 +31,7 @@ using time_ty      = std::chrono::hh_mm_ss<std::chrono::seconds>;
 using namespace std::string_literals;
 
 
-boost::json::object const& extract_subobject(boost::json::value const& root, std::string_view key) {
+inline boost::json::object const& extract_subobject(boost::json::value const& root, std::string_view key) {
    if (!root.is_object())
       throw std::runtime_error("JSON root is not an object");
 
@@ -48,7 +48,7 @@ boost::json::object const& extract_subobject(boost::json::value const& root, std
 
 
 
-boost::json::object extract_json_object(std::string_view json_str, std::string_view key) {
+inline boost::json::object extract_json_object(std::string_view json_str, std::string_view key) {
    boost::json::value jv;
    try {
       jv = boost::json::parse(json_str);
@@ -59,7 +59,7 @@ boost::json::object extract_json_object(std::string_view json_str, std::string_v
    return extract_subobject(jv, key);
    }
 
-boost::json::object extract_json_object(std::string_view json_str) {
+inline boost::json::object extract_json_object(std::string_view json_str) {
    try {
       boost::json::value jv = boost::json::parse(json_str);
       return jv.as_object();

@@ -43,6 +43,7 @@ add_subdirectory(Client)
 
 if(PLATFORM STREQUAL "Windows")
   add_subdirectory(BoostTools)
+  add_subdirectory(WeatherAPI)
   add_subdirectory(WeatherClient_intro)
   add_subdirectory(WeatherClient)
 endif()
