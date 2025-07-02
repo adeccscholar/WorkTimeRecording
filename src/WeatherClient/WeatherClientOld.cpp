@@ -1,4 +1,115 @@
 
+/*
+std::string fetch_weather_json(WeatherResolution resolution, double latitude, double longitude, int forecast_days) {
+   HttpRequest server("api.open-meteo.com");
+   return server.perform_get(GetUrl(resolution, latitude, longitude, forecast_days));
+   }
+*/
+
+/*
+WeatherMeta parse_weather_meta(std::string const& json_str) {
+   const auto current = boost_tools::extract_json_object(std::string_view{ json_str.data(), json_str.size() });
+   check_for_api_error(current);
+   return WeatherMeta {
+      .timezone              = boost_tools::get_value<std::string>(current, "timezone"),
+      .timezone_abbreviation = boost_tools::get_value<std::string>(current, "timezone_abbreviation"),
+      .utc_offset_seconds    = boost_tools::get_value<int>(current, "utc_offset_seconds"),
+      .elevation             = boost_tools::get_value<double>(current, "elevation")
+      };
+   }
+
+WeatherCurrentExtended parse_weather_current_extended(std::string const& json_str) {
+   const auto current = boost_tools::extract_json_object(std::string_view { json_str.data(), json_str.size() } , "current");
+   check_for_api_error(current);
+   return WeatherCurrentExtended {
+          .timestamp               = boost_tools::get_value<boost_tools::timepoint_ty, false>(current, "time"),
+          .temperature_2m          = boost_tools::get_value<double,       true>(current, "temperature_2m"),
+          .relative_humidity_2m    = boost_tools::get_value<double,       true>(current, "relative_humidity_2m"),
+          .dew_point_2m            = boost_tools::get_value<double,       true>(current, "dew_point_2m"),
+          .precipitation           = boost_tools::get_value<double,       true>(current, "precipitation"),
+          .rain                    = boost_tools::get_value<double,       true>(current, "rain"),
+          .snowfall                = boost_tools::get_value<double,       true>(current, "snowfall"),
+          .weather_code            = boost_tools::get_value<int,          true>(current, "weathercode"),
+          .pressure_msl            = boost_tools::get_value<double,       true>(current, "pressure_msl"),
+          .surface_pressure        = boost_tools::get_value<double,       true>(current, "surface_pressure"),
+          .cloudcover              = boost_tools::get_value<double,       true>(current, "cloudcover"),
+          .windspeed_10m           = boost_tools::get_value<double,       true>(current, "windspeed_10m"),
+          .windgusts_10m           = boost_tools::get_value<double,       true>(current, "windgusts_10m"),
+          .winddirection_10m       = boost_tools::get_value<double,       true>(current, "winddirection_10m"),
+          .uv_index                = boost_tools::get_value<double,       true>(current, "uv_index"),
+          .shortwave_radiation     = boost_tools::get_value<double,       true>(current, "shortwave_radiation"),
+          .is_day                  = boost_tools::get_value<bool,         true>(current, "is_day")
+         };
+   }
+
+
+WeatherCurrent parse_weather_current(const std::string& json_str) {
+   const auto current = boost_tools::extract_json_object(std::string_view{ json_str.data(), json_str.size() }, "current_weather");
+   check_for_api_error(current);
+   return WeatherCurrent {
+        .timestamp     = boost_tools::get_value<boost_tools::timepoint_ty>(current, "time"),
+        .temperature   = boost_tools::get_value<double, true>(current, "temperature"),
+        .windspeed     = boost_tools::get_value<double, true>(current, "windspeed"),
+        .winddirection = boost_tools::get_value<double, true>(current, "winddirection"),
+        .weathercode   = boost_tools::get_value<int, true>(current, "weathercode"),
+        .is_day        = boost_tools::get_value<bool, true>(current, "is_day")
+        };
+   }
+
+   */
+   /*/
+   std::vector<WeatherDay> parse_weather_days(std::string const& json_str) {
+      const auto daily = boost_tools::extract_json_object(std::string_view{ json_str.data(), json_str.size() }, "daily");
+      check_for_api_error(daily);
+
+      boost::json::array const& time_vec = daily.at("time").as_array();
+      std::vector<WeatherDay> result;
+      result.reserve(time_vec.size());
+
+      for (auto const& t : time_vec) result.emplace_back(std::move(WeatherDay { .date = boost_tools::get_value<boost_tools::date_ty>(t) }));
+
+      static const std::vector<std::tuple<std::string_view, std::function<void(WeatherDay&, boost::json::array const&, std::size_t)>>> field_map{
+         { "temperature_2m_max",         [](auto& d, auto const& a, auto i) { d.temp_max            = boost_tools::get_value<double, false>(a, i); } },
+         { "temperature_2m_min",         [](auto& d, auto const& a, auto i) { d.temp_min            = boost_tools::get_value<double, false>(a, i); } },
+         { "sunrise",                    [](auto& d, auto const& a, auto i) { d.sunrise             = boost_tools::get_value<boost_tools::time_ty, false>(a, i); } },
+         { "sunset",                     [](auto& d, auto const& a, auto i) { d.sunset              = boost_tools::get_value<boost_tools::time_ty, false>(a, i); } },
+         { "precipitation_sum",          [](auto& d, auto const& a, auto i) { d.precipitation_mm    = boost_tools::get_value<double, false>(a, i); } },
+         { "weathercode",                [](auto& d, auto const& a, auto i) { d.weather_code        = boost_tools::get_value<int, false>(a, i); } },
+         { "windspeed_10m_max",          [](auto& d, auto const& a, auto i) { d.windspeed_max       = boost_tools::get_value<double, false>(a, i); } },
+         { "uv_index_max",               [](auto& d, auto const& a, auto i) { d.uv_index            = boost_tools::get_value<double, false>(a, i); } },
+         { "temperature_2m_mean",        [](auto& d, auto const& a, auto i) { d.temp_mean           = boost_tools::get_value<double, false>(a, i); } },
+         { "apparent_temperature_max",   [](auto& d, auto const& a, auto i) { d.apparent_temp_max   = boost_tools::get_value<double, false>(a, i); } },
+         { "apparent_temperature_min",   [](auto& d, auto const& a, auto i) { d.apparent_temp_min   = boost_tools::get_value<double, false>(a, i); } },
+         { "sunshine_duration",          [](auto& d, auto const& a, auto i) { d.sunshine_duration   = boost_tools::get_value<boost_tools::time_ty, false>(a, i); } },
+         { "precipitation_hours",        [](auto& d, auto const& a, auto i) { d.precipitation_hours = boost_tools::get_value<double, false>(a, i); } },
+         { "windgusts_10m_max",          [](auto& d, auto const& a, auto i) { d.windgusts_max       = boost_tools::get_value<double, false>(a, i); } },
+         { "shortwave_radiation_sum",    [](auto& d, auto const& a, auto i) { d.radiation_sum       = boost_tools::get_value<double, false>(a, i); } },
+         { "et0_fao_evapotranspiration", [](auto& d, auto const& a, auto i) { d.evapotranspiration  = boost_tools::get_value<double, false>(a, i); } },
+         { "rain_sum",                   [](auto& d, auto const& a, auto i) { d.rain_sum            = boost_tools::get_value<double, false>(a, i); } },
+         { "snowfall_sum",               [](auto& d, auto const& a, auto i) { d.snowfall_sum        = boost_tools::get_value<double, false>(a, i); } },
+         { "winddirection_10m_dominant", [](auto& d, auto const& a, auto i) { d.wind_direction_deg  = boost_tools::get_value<int, false>(a, i); } }
+      };
+      for (auto const& [field, apply] : field_map) {
+         auto it = daily.find(field);
+         if (it == daily.end()) continue;
+
+         boost::json::array const& arr = it->value().as_array();
+         for (std::size_t i = 0; i < std::min(result.size(), arr.size()); ++i) {
+            try {
+               apply(result[i], arr, i);  //
+               }
+            catch (std::exception const& ex) {
+               throw std::runtime_error(std::format("Error in field '{}', index {}: {}", field, i, ex.what()));
+            }
+         }
+      }
+      return result;
+   }
+
+   */
+
+
+
 inline const std::unordered_map<int, std::pair<std::string, std::string>> weather_code_descriptions = {
     { 0, {"Klarer Himmel", "Clear sky"}},
     { 1, {"Überwiegend klar", "Mainly clear"}},

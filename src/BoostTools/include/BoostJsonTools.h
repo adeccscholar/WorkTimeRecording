@@ -20,6 +20,8 @@
 #include <concepts>
 #include <stdexcept>
 
+namespace boost_tools {
+
 // Eigene Zeittypen 
 using timepoint_ty = std::chrono::sys_seconds;
 using date_ty      = std::chrono::year_month_day;
@@ -375,7 +377,5 @@ std::conditional_t<opt_val, std::optional<ty>, ty> get_value(boost::json::array 
    }
 
 
-// Erweiterung per from_json<T>(boost::json::value const&)
-// Das ist ein generischer Erweiterungspunkt über ADL(Argument - Dependent Lookup) : 
-// Du ermöglichst es Benutzern Deines Frameworks, ihre eigenen Typen für get_value<T>() nutzbar zu machen, 
-// ohne die value_converter - Struktur spezialisieren zu müssen.
+} // end of namespace boost_tools
+

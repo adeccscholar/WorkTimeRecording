@@ -11,7 +11,8 @@ add_definitions(-DBUILD_WITH_QT)
 # include (../adecc_tao_settings.cmake)
 include (../adecc_boost_settings.cmake) 
 
-set(PROJECT_SOURCES WeatherClient.cpp )
+set(PROJECT_SOURCES WeatherClient.cpp WeatherData.cpp WeatherData.h)
+
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
 
 # configure_boost_for_target(${PROJECT_NAME} 1.87 "system;json")
