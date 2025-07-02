@@ -3,10 +3,8 @@
 #if defined(_WIN32) || defined(__CYGWIN__)
 #  ifdef WEATHERAPI_BUILD_DLL
 #    define WEATHERAPI_API __declspec(dllexport)
-#  elif defined(WEATHERAPI_USE_DLL)
-#    define WEATHERAPI_API __declspec(dllimport)
 #  else
-#    define WEATHERAPI_API
+#    define WEATHERAPI_API __declspec(dllimport)
 #  endif
 #else
 #  define WEATHERAPI_API __attribute__((visibility("default")))
@@ -31,8 +29,8 @@
 
 using namespace std::string_literals;
 
-std::string GetServer(); 
-std::string GetUrl(WeatherResolution resolution, double latitude, double longitude, int forecast_days);
+WEATHERAPI_API std::string GetServer();
+WEATHERAPI_API std::string GetUrl(WeatherResolution resolution, double latitude, double longitude, int forecast_days);
 
 WEATHERAPI_API void from_json(WeatherMeta& meta, boost::json::object const& obj, boost_tools::from_json_tag);
 WEATHERAPI_API void from_json(WeatherCurrent& wc, boost::json::object const& obj, boost_tools::from_json_tag);

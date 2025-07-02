@@ -30,7 +30,6 @@ int main() {
       print(meta);
 
       const auto cur_extended_data = parse<WeatherCurrentExtended>(json, "current");
-      print(meta);
       print(cur_extended_data);
       
       std::println("\n\ndaily weather:");

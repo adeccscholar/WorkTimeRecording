@@ -3,10 +3,8 @@
 #if defined(_WIN32) || defined(__CYGWIN__)
 #  ifdef WEATHERAPI_BUILD_DLL
 #    define WEATHERAPI_API __declspec(dllexport)
-#  elif defined(WEATHERAPI_USE_DLL)
-#    define WEATHERAPI_API __declspec(dllimport)
 #  else
-#    define WEATHERAPI_API
+#    define WEATHERAPI_API __declspec(dllimport)
 #  endif
 #else
 #  define WEATHERAPI_API __attribute__((visibility("default")))
