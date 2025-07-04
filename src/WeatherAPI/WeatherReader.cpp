@@ -36,6 +36,9 @@ std::string GetUrl(WeatherResolution resolution, double latitude, double longitu
 
 
    switch (resolution) {
+      case WeatherResolution::TimeCheck:
+         endpoint += "&current";
+         break;
       case WeatherResolution::Current_Extended:
          endpoint += "&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,rain,snowfall,"
             "weathercode,pressure_msl,surface_pressure,cloudcover,windspeed_10m,windgusts_10m,"
@@ -72,6 +75,10 @@ void check_for_api_error(boost::json::object const& json_response) {
       }
    }
 
+
+void from_json(WeatherTime& tc, boost::json::object const& obj, boost_tools::from_json_tag) {
+   tc.timestamp = boost_tools::get_value<boost_tools::timepoint_ty>(obj, "time");
+   }
 
 void from_json(WeatherMeta& meta, boost::json::object const& obj, boost_tools::from_json_tag) {
    meta.timezone = boost_tools::get_value<std::string>(obj, "timezone");

@@ -7,8 +7,8 @@
 #endif()
 
 if(WIN32)
-   set(Boost_ROOT "D:\\local\\boost_1_87_0")
-   set(Boost_DIR "D:\\local\\boost_1_87_0\\lib64-msvc-14.3\\cmake\\Boost-1.87.0")
+   set(Boost_ROOT "D:\\local\\boost_1_88_0")
+   set(Boost_DIR "D:\\local\\boost_1_88_0\\lib64-msvc-14.3\\cmake\\Boost-1.88.0")
 endif()
 
 # Aktivieren Sie Hot Reload für MSVC-Compiler, sofern unterstützt.

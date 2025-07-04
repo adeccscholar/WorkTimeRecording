@@ -5,6 +5,7 @@
 
 #include "WeatherData.h"
 #include "WeatherReader.h"
+#include "WeatherPrint.h"
 
 #include <print>
 
@@ -25,10 +26,13 @@ int main() {
    try {
       const double latitude = 52.5366923, longitude = 13.2027663;
       HttpRequest server(GetServer());
-      auto json = server.perform_get(GetUrl(WeatherResolution::Current_Extended, latitude, longitude, 1));
-      const auto meta              = parse<WeatherMeta>(json);
+      auto json = server.perform_get(GetUrl(WeatherResolution::TimeCheck, latitude, longitude, 1));
+      const auto meta = parse<WeatherMeta>(json);
+      const auto check = parse<WeatherTime>(json, "current");
+      std::println("WeatherAPI CLient: {:%d.%m.%Y %X}", check.timestamp);
       print(meta);
 
+      json = server.perform_get(GetUrl(WeatherResolution::Current_Extended, latitude, longitude, 1));
       const auto cur_extended_data = parse<WeatherCurrentExtended>(json, "current");
       print(cur_extended_data);
       
@@ -42,7 +46,7 @@ int main() {
       print(current_data);
 
       std::println("\n\nhourly weather:");
-      json = server.perform_get(GetUrl(WeatherResolution::Hourly, latitude, longitude, 7));
+      json = server.perform_get(GetUrl(WeatherResolution::Hourly, latitude, longitude, 14));
       const auto hourly_data = parse_series<WeatherHour>(json, "hourly", weather_hour_fields);
       print(hourly_data);
       }

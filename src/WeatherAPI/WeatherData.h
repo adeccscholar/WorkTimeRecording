@@ -27,7 +27,12 @@ using date_ty = std::chrono::year_month_day;
 using time_ty = std::chrono::hh_mm_ss<std::chrono::seconds>;
 
 /// @brief Art der Wetterdaten (täglich oder stündlich)
-enum class WeatherResolution { Current, Current_Extended, Daily, Hourly };
+enum class WeatherResolution { TimeCheck, Current, Current_Extended, Daily, Hourly };
+
+struct WeatherTime {
+   timepoint_ty          timestamp;
+   };
+
 
 /**
  * @brief Struktur zur Darstellung von Metadaten der Wetteranfrage.
@@ -145,8 +150,3 @@ WEATHERAPI_API std::string describe_uv_index(std::optional<double> uv_index, boo
 WEATHERAPI_API std::string describe_weather_code(std::optional<int> code);
 WEATHERAPI_API std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool german = true);
 
-WEATHERAPI_API void print(WeatherMeta const& meta);
-WEATHERAPI_API void print(WeatherCurrentExtended const& w);
-WEATHERAPI_API void print(WeatherCurrent const& wc);
-WEATHERAPI_API void print(std::vector<WeatherDay> const& data);
-WEATHERAPI_API void print(std::vector<WeatherHour> const& data);

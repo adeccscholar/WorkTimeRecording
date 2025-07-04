@@ -12,7 +12,9 @@ add_definitions(-DWEATHERAPI_BUILD_DLL)
 include (../adecc_boost_settings.cmake) 
 
 set(PROJECT_SOURCES WeatherData.cpp WeatherData.h
-                    WeatherReader.cpp WeatherReader.h)
+                    WeatherReader.cpp WeatherReader.h
+                    WeatherPrint.cpp WeatherPrint.h 
+                    WeatherAPI.h )
 
 
 add_library(WeatherAPI SHARED ${PROJECT_SOURCES} )

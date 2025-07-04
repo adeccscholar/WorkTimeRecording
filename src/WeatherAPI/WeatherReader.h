@@ -1,15 +1,5 @@
 #pragma once
-
-#if defined(_WIN32) || defined(__CYGWIN__)
-#  ifdef WEATHERAPI_BUILD_DLL
-#    define WEATHERAPI_API __declspec(dllexport)
-#  else
-#    define WEATHERAPI_API __declspec(dllimport)
-#  endif
-#else
-#  define WEATHERAPI_API __attribute__((visibility("default")))
-#endif
-
+#include "WeatherAPI.h"
 
 #include "WeatherData.h"
 
@@ -29,9 +19,16 @@
 
 using namespace std::string_literals;
 
+// https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&timezone=auto&current=temperature_2m
+// https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&timezone=auto&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,rain,snowfall,weathercode,pressure_msl,surface_pressure,cloudcover,windspeed_10m,windgusts_10m,winddirection_10m,uv_index,shortwave_radiation,is_day
+
+// visibility (m) ,shower (mm), precipitation_probability (%) shortwave_radiation (W/m²)
+// apparent_temperature (°C), cloud_cover (%), cape (J/kg), sunshine_duration (sec)
+
 WEATHERAPI_API std::string GetServer();
 WEATHERAPI_API std::string GetUrl(WeatherResolution resolution, double latitude, double longitude, int forecast_days);
 
+WEATHERAPI_API void from_json(WeatherTime& tc, boost::json::object const& obj, boost_tools::from_json_tag);
 WEATHERAPI_API void from_json(WeatherMeta& meta, boost::json::object const& obj, boost_tools::from_json_tag);
 WEATHERAPI_API void from_json(WeatherCurrent& wc, boost::json::object const& obj, boost_tools::from_json_tag);
 WEATHERAPI_API void from_json(WeatherCurrentExtended& wce, boost::json::object const& obj, boost_tools::from_json_tag);

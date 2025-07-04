@@ -8,7 +8,7 @@ add_library(BoostTools INTERFACE)
 
 include (../adecc_boost_settings.cmake) 
 
-configure_boost_for_target(BoostTools 1.87 "system;json")
+configure_boost_for_target(BoostTools 1.88 "system;json")
 
 target_include_directories(BoostTools
    INTERFACE
