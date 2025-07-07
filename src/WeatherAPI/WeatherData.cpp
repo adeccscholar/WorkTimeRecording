@@ -1,3 +1,51 @@
+// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+\file
+\brief Implementations for core weather data helpers and description functions in the WeatherAPI library.
+
+\details
+This source file provides all logic for formatting, description, and textual conversion of weather data as defined in `WeatherData.h`.
+It implements functions for wind direction, Beaufort scale, weather code mapping, UV index classification, and rule-based summaries,
+using the data types, templates, and interfaces declared in the header.
+
+The file may make extensive use of C++ standard library features, as well as robust conversion and validation patterns from the BoostTools module,
+to ensure all logic is type-safe, well-structured, and locale-independent.
+
+**Design Note:**
+- Implementation of functions is kept separate from the data structure definitions to allow for clean interface headers and shared library usability.
+- Each function is documented in detail in this file, focusing on edge cases, internationalization, and integration with the overall API.
+
+\warning
+If you add new export functions, remember to update both header and file documentation and to use the correct `WEATHERAPI_API` macro.
+
+\see WeatherData.h (declarations and type definitions)
+
+  \version 1.0
+  \date    30.07.2025
+  \author  Volker Hillmann (adecc Systemhaus GmbH)
+
+  \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
+
+*/
+
 #include "WeatherData.h"
 
 
@@ -6,6 +54,14 @@
 #include <memory>
 #include <unordered_map>
 
+namespace WeatherAPI {
+
+/**
+\brief Converts wind direction in degrees to a cardinal text description.
+\param deg Wind direction in degrees (0-360).
+\return Text description (e.g., "Nord", "North").
+\see WeatherHour, WeatherDay
+*/
 inline std::string wind_direction_text(std::optional<double> deg) {
    static constexpr const char* directions[] = {
        "N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO",
@@ -14,6 +70,11 @@ inline std::string wind_direction_text(std::optional<double> deg) {
    return deg ? directions[static_cast<int>((*deg + 11.25) / 22.5) % 16] : "n/a";
    }
 
+/**
+\brief Maps wind speed to Beaufort scale with textual description.
+\param speed_kmh Wind speed in km/h.
+\return Pair of German and English Beaufort descriptions.
+*/
 inline std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh) {
    static const RuleSet<double> beaufort = {
        {  0.0,   1.0, {"Windstille", "Calm"}},
@@ -39,6 +100,12 @@ inline std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh) 
    return { "Unbekannt", "Unknown" };
    }
 
+/**
+\brief Describes the UV index as a risk level.
+\param uv_index UV index value.
+\param German If true, outputs German text; otherwise English.
+\return Description of UV index (e.g., "hoch", "high").
+*/
 std::string describe_uv_index(std::optional<double> uv_index, bool German) {
    static RuleSet<double> const rules = {
         { std::numeric_limits<double>::lowest(), 0.0,  { "Ungültig",  "undefined"   } },
@@ -68,7 +135,24 @@ std::string describe_uv_index(std::optional<double> uv_index, bool German) {
    return oss.str();
    }
 
+/**
+\brief Mapping table from WMO weather codes to human-readable descriptions (German/English).
 
+\details
+This constant unordered map provides the translation between WMO weather codes (as returned by Open-Meteo)
+and their corresponding German and English descriptions.  
+It is used by the function \c describe_weather_code to return user-friendly weather summaries.
+
+If new weather codes are introduced by the API, they should be added here.
+
+\see describe_weather_code
+
+\warning
+Descriptions are not localized at runtime; only German and English are supported as of now.
+
+\todo Add support for additional languages if required.
+\todo Synchronize with Open-Meteo documentation for updates.
+*/
 const std::unordered_map<int, std::pair<std::string, std::string>> weather_code_descriptions = {
     { 0, {"Klarer Himmel", "Clear sky"}},
     { 1, {"Überwiegend klar", "Mainly clear"}},
@@ -101,6 +185,20 @@ const std::unordered_map<int, std::pair<std::string, std::string>> weather_code_
 };
 
 
+/**
+\brief Converts a WMO weather code to a human-readable description.
+
+\details
+Looks up the code in \c weather_code_descriptions and returns the appropriate description in German or English.
+If the code is not found, returns a default message.
+
+\param code Weather code (WMO standard).
+\return Description of the weather condition (localized).
+\see weather_code_descriptions
+
+\warning
+Only codes present in the map are described; unknown codes are reported as "unbekannt"/"unknown".
+*/
 std::string describe_weather_code(std::optional<int> code) {
    if (!code) return "n/a";
    if (auto it = weather_code_descriptions.find(*code); it != weather_code_descriptions.end()) {
@@ -111,6 +209,12 @@ std::string describe_weather_code(std::optional<int> code) {
       }
    }
 
+/**
+\brief Generates a text summary of the extended weather report.
+\param wh The extended current weather data.
+\param german If true, outputs German; otherwise English.
+\return Human-readable weather summary.
+*/
 std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool german) {
    std::ostringstream out;
 
@@ -199,4 +303,4 @@ std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool germ
    return out.str().empty() ? (german ? "Keine besonderen Wettererscheinungen." : "No special weather conditions.") : out.str();
    }
 
-
+} // end of namespace WeatherAPI

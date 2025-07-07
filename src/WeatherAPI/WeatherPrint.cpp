@@ -1,8 +1,50 @@
+// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+\file
+\brief Implementation of formatted output routines for WeatherAPI weather data.
+
+\details
+This file contains all logic for formatting and printing weather data types, as declared in WeatherOutput.h.
+Output conventions follow structured, locale-independent patterns to aid diagnostics and reporting.
+Each function handles its input robustly and provides useful output even for partially filled or incomplete data.
+
+\warning
+Do not mix business logic or non-output processing with these routines; keep formatting and data handling separate.
+
+\see WeatherOutput.h (interface and documentation)
+
+  \version 1.0
+  \date    30.06.2025
+  \author  Volker Hillmann (adecc Systemhaus GmbH)
+
+  \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see https://www.gnu.org/licenses/.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
+
+*/
 #include "WeatherPrint.h"
 
 #include <formatter_optional.h>  // now in Tools
 
 #include <print>
+
+namespace WeatherAPI {
 
 void print(WeatherMeta const& meta) {
    std::println("Zeitzone: {} ({}), Offset: {}s, Höhe: {}m",
@@ -45,3 +87,5 @@ void print(std::vector<WeatherHour> const& data) {
       );
    }
 }
+
+} // end of namespace WeatehrAPI

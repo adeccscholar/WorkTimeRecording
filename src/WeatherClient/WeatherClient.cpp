@@ -25,30 +25,30 @@ int main() {
    std::println("Testprogram to use the open-meteo.com Rest API");
    try {
       const double latitude = 52.5366923, longitude = 13.2027663;
-      HttpRequest server(GetServer());
-      auto json = server.perform_get(GetUrl(WeatherResolution::TimeCheck, latitude, longitude, 1));
-      const auto meta = parse<WeatherMeta>(json);
-      const auto check = parse<WeatherTime>(json, "current");
+      HttpRequest server(WeatherAPI::GetServer());
+      auto json = server.perform_get(GetUrl(WeatherAPI::WeatherResolution::TimeCheck, latitude, longitude, 1));
+      const auto meta = WeatherAPI::parse<WeatherAPI::WeatherMeta>(json);
+      const auto check = WeatherAPI::parse<WeatherAPI::WeatherTime>(json, "current");
       std::println("WeatherAPI CLient: {:%d.%m.%Y %X}", check.timestamp);
-      print(meta);
+      WeatherAPI::print(meta);
 
-      json = server.perform_get(GetUrl(WeatherResolution::Current_Extended, latitude, longitude, 1));
-      const auto cur_extended_data = parse<WeatherCurrentExtended>(json, "current");
-      print(cur_extended_data);
+      json = server.perform_get(WeatherAPI::GetUrl(WeatherAPI::WeatherResolution::Current_Extended, latitude, longitude, 1));
+      const auto cur_extended_data = WeatherAPI::parse<WeatherAPI::WeatherCurrentExtended>(json, "current");
+      WeatherAPI::print(cur_extended_data);
       
       std::println("\n\ndaily weather:");
-      json = server.perform_get(GetUrl(WeatherResolution::Daily, latitude, longitude, 14));
-      const auto daily_data = parse_series<WeatherDay>(json, "daily", weather_day_fields);
-      print(daily_data);
+      json = server.perform_get(WeatherAPI::GetUrl(WeatherAPI::WeatherResolution::Daily, latitude, longitude, 14));
+      const auto daily_data = WeatherAPI::parse_series<WeatherAPI::WeatherDay>(json, "daily", WeatherAPI::weather_day_fields);
+      WeatherAPI::print(daily_data);
      
       std::println("\n\nshort summation for current weather:");
-      const auto current_data = parse<WeatherCurrent>(server.perform_get(GetUrl(WeatherResolution::Current, latitude, longitude, 1)), "current_weather");
-      print(current_data);
+      const auto current_data = WeatherAPI::parse<WeatherAPI::WeatherCurrent>(server.perform_get(WeatherAPI::GetUrl(WeatherAPI::WeatherResolution::Current, latitude, longitude, 1)), "current_weather");
+      WeatherAPI::print(current_data);
 
       std::println("\n\nhourly weather:");
-      json = server.perform_get(GetUrl(WeatherResolution::Hourly, latitude, longitude, 14));
-      const auto hourly_data = parse_series<WeatherHour>(json, "hourly", weather_hour_fields);
-      print(hourly_data);
+      json = server.perform_get(WeatherAPI::GetUrl(WeatherAPI::WeatherResolution::Hourly, latitude, longitude, 14));
+      const auto hourly_data = WeatherAPI::parse_series<WeatherAPI::WeatherHour>(json, "hourly", WeatherAPI::weather_hour_fields);
+      WeatherAPI::print(hourly_data);
       }
    catch (std::exception const& e) {
       std::println(stderr, "Fehler: {}", e.what());

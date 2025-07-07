@@ -47,7 +47,14 @@
      - Standalone roles as client and (local) server
      - RFID-based access control using finite state machines (Boost.SML)
 
-  5. **Future Extensions**
+  5. **State Machine Weather Server**
+     - Implements a robust asynchronous server using a finite state machine architecture (boost::statechart)
+     - Handles client requests, processes states for connection, query, and response handling
+     - Retrieves and parses live weather data from Open Meteo using HTTP (boost::beast) and JSON processing (boost::json)
+     - Extensible for additional APIs or business logic through new state or event definitions
+     - Ensures clear separation of concerns: networking, state transitions, and external API interaction
+
+  6. **Future Extensions**
      - Web-REST server for integrating mobile devices
      - Discussion of architectural questions, opportunities, and risks
 
@@ -173,4 +180,93 @@
 
   \details This directory includes only header files for the documentation of the enterprise 
            time tracking system.
+*/
+
+/**
+   \dir src/BoostTools
+   \brief Core utilities for robust, extensible, and type-safe Boost.JSON handling in C++ projects.
+
+   \details
+   The `src/BoostTools` directory provides a collection of modern C++ components for seamless integration of Boost.
+   JSON with domain-specific C++ types and logic.
+   It implements advanced patterns for:
+   - **Type-safe value conversion** from JSON to arbitrary C++ types, with robust error handling.
+   - **Policy-based validation**, allowing decoupled domain checks and reusable validation strategies.
+   - **ADL-based object mapping** for clean, extensible deserialization of user-defined types via tag-dispatch.
+
+   These utilities are designed for use in backend servers, data pipelines, and systems that require reliable parsing, validation, 
+   and mapping of JSON data from APIs or other external sources.
+   All components follow a modern, trait- and policy-driven architecture, focusing on extensibility, safety, and clarity.
+
+   The directory typically includes:
+   - Traits and converters for primitive and chrono-based types.
+   - Validator policies for ranges, date checks, and application rules.
+   - Infrastructure for generic deserialization of complex objects.
+*/
+
+/**
+   \dir src/BoostTools/include
+   \brief Public interface headers for BoostTools utilities.
+
+   \details
+   This directory contains all public header files of the BoostTools component suite, providing modern C++ interfaces for type-safe 
+   JSON conversion, validation policies, and extensible object mapping based on Boost.JSON.
+
+   These headers are intended for direct inclusion in application and library code.
+*/
+
+/**
+\dir src/WeatherAPI
+\brief Shared library and public interface for weather data access and formatting based on Open-Meteo.
+
+\details
+This directory contains the complete implementation and public interface of the WeatherAPI shared library, which provides robust, type-safe access to weather data from the Open-Meteo service.
+It includes all data structures, parsing, reporting, and utility functions for working with weather requests and responses in C++ projects.
+
+**Key files:**
+- \c WeatherAPI.h : Import/export macro and platform handling for library usage.
+- \c WeatherData.h / .cpp : Data structures and type definitions for all weather value types.
+- \c WeatherReader.h / .cpp : High-level parsing, Open-Meteo API access, error handling, and JSON mapping.
+- \c WeatherOutput.h / .cpp : Reporting and formatted print functions for all weather types.
+
+**Build and integration:**
+- The \c CMakeLists.txt defines this directory as a shared library target, exporting all public symbols and including this folder as a header search directory for dependent projects.
+- Downstream projects can consume WeatherAPI by linking the shared library and including headers from this directory.
+
+**Design highlights:**
+- Strict separation of data, parsing, and reporting logic for maintainable code.
+- Integration with BoostTools for extensible, policy-based JSON conversion and validation.
+- Modular structure for easy extension as Open-Meteo expands its API.
+
+\warning
+Do not add application-specific or UI logic to this directory; keep it strictly for data and API definitions, shared library implementation, and core reporting.
+
+\todo Add further build options or targets to CMake for static library, testing, or additional tools.
+*/
+
+/**
+\dir src/WeatherAPIServer
+\brief Server-side weather data acquisition and event processing using Open-Meteo and Statechart.
+
+\details
+This directory contains the implementation of a modular server that retrieves, processes, and manages weather data via the Open-Meteo REST API.
+The server leverages the WeatherAPI shared library for all parsing, validation, and formatting of weather responses, and uses Boost.Statechart to model and control the system’s state transitions and asynchronous event handling.
+
+**Architecture highlights:**
+- Integrates Open-Meteo’s REST API for live and forecast weather data retrieval.
+- Uses the WeatherAPI shared library for all core data types, JSON mapping, and reporting.
+- Employs \c boost::statechart for robust, extensible modeling of the server’s internal finite state machine (FSM), ensuring reliable state and error management.
+- System events and transitions are triggered and scheduled by the central \c Scheduler class, enabling periodic updates, retries, and event-driven workflow.
+
+**Key components:**
+- WeatherProxy: Provides all weather data structures, conversion, and print routines.
+- Scheduler: Triggers and orchestrates FSM events (such as data requests, updates, and error handling).
+- Statechart FSM: Manages states such as idle, fetching, error, updating, etc., allowing clear extensibility and testability.
+
+\warning
+This directory is focused on backend/service logic only; client, GUI, or business-layer integration should be handled elsewhere.
+
+\todo Extend the FSM for additional error recovery, health checks, or push-style notification.
+\todo Add interfaces for logging and operational metrics.
+
 */

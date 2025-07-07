@@ -1,11 +1,60 @@
+// SPDX-FileCopyrightText: 2025 adecc Systemhaus GmbH
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+/**
+\file
+\brief Implementation of weather data import, parsing, and error handling for the WeatherAPI library.
+
+\details
+This source file contains all logic for constructing Open-Meteo API URLs, mapping JSON responses to weather data structures, and handling parsing errors and control data for series imports.
+It makes use of the reusable parsing and validation routines from BoostTools and the type-safe structures declared in WeatherData.h.
+
+All exported functions are documented individually within this file, including:
+- API endpoint helpers (`GetServer`, `GetUrl`)
+- JSON-to-struct mapping functions (`from_json` overloads)
+- Error detection logic (`check_for_api_error`)
+- Templated series and single-value parsers
+
+The design follows the pattern of separation between interface (header) and implementation (this file), promoting clarity, maintainability, and extensibility.
+
+\warning
+API changes or updates to Open-Meteo fields must be reflected here and in the control data for correct operation.
+
+\see WeatherReader.h (interface and documentation)
+
+  \version 1.0
+  \date    30.06.2025
+  \author  Volker Hillmann (adecc Systemhaus GmbH)
+
+  \copyright Copyright Â© 2020 - 2025 adecc Systemhaus GmbH
+
+  \licenseblock{GPL-3.0-or-later}
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see https://www.gnu.org/licenses/.
+  \endlicenseblock
+
+  \note This file is part of the adecc Scholar project â€“ Free educational materials for modern C++.
+
+*/
 
 #include "WeatherReader.h"
 
-#include <BoostJsonTools.h>      // now in BoostTools
-#include <BoostBeastTools.h>     // now in BoostTools
+#include <BoostJsonTools.h>     
+#include <BoostBeastTools.h>    
 #include <BoostJsonFrom.h>
 
 using namespace std::string_literals;
+
+namespace WeatherAPI {
 
 std::string GetServer() { 
    return "api.open-meteo.com"s; 
@@ -13,12 +62,12 @@ std::string GetServer() {
 
 
 /**
-  \brief Holt Wetterdaten im JSON-Format (täglich oder stündlich) von Open-Meteo.
+  \brief Holt Wetterdaten im JSON-Format (tÃ¤glich oder stÃ¼ndlich) von Open-Meteo.
 
   \param latitude Breitengrad
-  \param longitude Längengrad
+  \param longitude LÃ¤ngengrad
   \param forecast_days Anzahl der Vorhersagetage (1-16)
-  \param resolution Auflösung (täglich oder stündlich)
+  \param resolution AuflÃ¶sung (tÃ¤glich oder stÃ¼ndlich)
   \return JSON-Antwort als String
  */
 std::string GetUrl(WeatherResolution resolution, double latitude, double longitude, int forecast_days) {
@@ -42,7 +91,7 @@ std::string GetUrl(WeatherResolution resolution, double latitude, double longitu
       case WeatherResolution::Current_Extended:
          endpoint += "&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,rain,snowfall,"
             "weathercode,pressure_msl,surface_pressure,cloudcover,windspeed_10m,windgusts_10m,"
-            "winddirection_10m,uv_index,shortwave_radiation,is_day";
+            "winddirection_10m,uv_index,shortwave_radiation,cape,is_day";
          break;
       case WeatherResolution::Daily:
          endpoint += std::format("&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,"
@@ -57,7 +106,7 @@ std::string GetUrl(WeatherResolution resolution, double latitude, double longitu
             "precipitation,rain,showers,snowfall,weathercode,pressure_msl,surface_pressure,"
             "cloudcover,cloudcover_low,cloudcover_mid,cloudcover_high,shortwave_radiation,"
             "direct_radiation,diffuse_radiation,windspeed_10m,windgusts_10m,"
-            "winddirection_10m,uv_index,is_day&forecast_days={}", forecast_days);
+            "winddirection_10m,uv_index,cape,is_day&forecast_days={}", forecast_days);
          break;
       case WeatherResolution::Current:
          endpoint += "&current_weather=true";
@@ -77,7 +126,7 @@ void check_for_api_error(boost::json::object const& json_response) {
 
 
 void from_json(WeatherTime& tc, boost::json::object const& obj, boost_tools::from_json_tag) {
-   tc.timestamp = boost_tools::get_value<boost_tools::timepoint_ty>(obj, "time");
+   tc.timestamp = boost_tools::get_value<boost_tools::local_timepoint_ty>(obj, "time");
    }
 
 void from_json(WeatherMeta& meta, boost::json::object const& obj, boost_tools::from_json_tag) {
@@ -88,7 +137,7 @@ void from_json(WeatherMeta& meta, boost::json::object const& obj, boost_tools::f
    }
 
 void from_json(WeatherCurrent& wc, boost::json::object const& obj, boost_tools::from_json_tag) {
-   wc.timestamp = boost_tools::get_value<boost_tools::timepoint_ty>(obj, "time");
+   wc.timestamp = boost_tools::get_value<boost_tools::local_timepoint_ty>(obj, "time");
    wc.temperature = boost_tools::get_value<double, true>(obj, "temperature");
    wc.windspeed = boost_tools::get_value<double, true>(obj, "windspeed");
    wc.winddirection = boost_tools::get_value<double, true>(obj, "winddirection");
@@ -97,7 +146,7 @@ void from_json(WeatherCurrent& wc, boost::json::object const& obj, boost_tools::
    }
 
 void from_json(WeatherCurrentExtended& wce, boost::json::object const& obj, boost_tools::from_json_tag) {
-   wce.timestamp = boost_tools::get_value<boost_tools::timepoint_ty>(obj, "time");
+   wce.timestamp = boost_tools::get_value<boost_tools::local_timepoint_ty>(obj, "time");
    wce.temperature_2m = boost_tools::get_value<double, true>(obj, "temperature_2m");
    wce.relative_humidity_2m = boost_tools::get_value<double, true>(obj, "relative_humidity_2m");
    wce.dew_point_2m = boost_tools::get_value<double, true>(obj, "dew_point_2m");
@@ -112,6 +161,7 @@ void from_json(WeatherCurrentExtended& wce, boost::json::object const& obj, boos
    wce.windgusts_10m = boost_tools::get_value<double, true>(obj, "windgusts_10m");
    wce.winddirection_10m = boost_tools::get_value<double, true>(obj, "winddirection_10m");
    wce.uv_index = boost_tools::get_value<double, true>(obj, "uv_index");
+   wce.cape = boost_tools::get_value<double, true>(obj, "cape");
    wce.is_day = boost_tools::get_value<bool, true>(obj, "is_day");
    }
 
@@ -139,7 +189,7 @@ WEATHERAPI_API std::vector<std::tuple<std::string_view, control_func<WeatherDay>
 };
 
 std::vector<std::tuple<std::string_view, control_func<WeatherHour>>> WEATHERAPI_API weather_hour_fields = {
-     { "time",                 [](auto& wh, auto const& a, auto i) { wh.timestamp = boost_tools::get_value<boost_tools::timepoint_ty>(a, i); } },
+     { "time",                 [](auto& wh, auto const& a, auto i) { wh.timestamp = boost_tools::get_value<boost_tools::local_timepoint_ty>(a, i); } },
      { "temperature_2m",       [](auto& wh, auto const& a, auto i) { wh.temperature_2m = boost_tools::get_value<double, true>(a, i); } },
      { "relative_humidity_2m", [](auto& wh, auto const& a, auto i) { wh.relative_humidity_2m = boost_tools::get_value<double, true>(a, i); } },
      { "dew_point_2m",         [](auto& wh, auto const& a, auto i) { wh.dew_point_2m = boost_tools::get_value<double, true>(a, i); } },
@@ -162,5 +212,8 @@ std::vector<std::tuple<std::string_view, control_func<WeatherHour>>> WEATHERAPI_
      { "windgusts_10m",        [](auto& wh, auto const& a, auto i) { wh.windgusts_10m = boost_tools::get_value<double, true>(a, i); } },
      { "winddirection_10m",    [](auto& wh, auto const& a, auto i) { wh.winddirection_10m = boost_tools::get_value<double, true>(a, i); } },
      { "uv_index",             [](auto& wh, auto const& a, auto i) { wh.uv_index = boost_tools::get_value<double, true>(a, i); } },
+     { "cape",                 [](auto& wh, auto const& a, auto i) { wh.uv_index = boost_tools::get_value<double, true>(a, i); } }, 
      { "is_day",               [](auto& wh, auto const& a, auto i) { wh.is_day = boost_tools::get_value<bool, true>(a, i); } }
 };
+
+} // end of namespace WeatherAPI

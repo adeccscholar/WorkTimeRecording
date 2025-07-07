@@ -410,7 +410,7 @@ AUTOLINK_IGNORE_WORDS  =
 # collaboration diagrams that involve STL classes more complete and accurate.
 # The default value is: NO.
 
-BUILTIN_STL_SUPPORT    = NO
+BUILTIN_STL_SUPPORT    = YES
 
 # If you use Microsoft's C++/CLI language, you should set this option to YES to
 # enable parsing support.
@@ -1075,7 +1075,8 @@ RECURSIVE              = YES
 EXCLUDE                = src/ApplicationServer/.vs \
                          src/ApplicationServer/x64 \
                          src/ApplicationServer/out \
-                         src/out
+                         src/out \
+                         src/external
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
