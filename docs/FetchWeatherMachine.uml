@@ -1,0 +1,24 @@
+@startuml
+title FetchWeatherMachine State Diagram
+
+[*] --> OffState
+
+state OnState {
+  [*] --> OnIdleState
+  OnIdleState --> OnDailyState      : EvDaily
+  OnIdleState --> OnCurrentState    : EvReadCurrent
+  OnDailyState --> OnIdleState      : EvIdle
+  OnCurrentState --> OnIdleState    : EvIdle
+}
+
+OffState --> StartingState         : EvStart
+OffState --> OffState              : EvTerminate / terminate
+
+StartingState --> OnState          : EvIdle
+
+OnState --> StoppingState          : EvShutdown
+OnState --> OffState               : EvTerminate / terminate
+
+StoppingState --> OffState         : EvShutdown
+
+@enduml
