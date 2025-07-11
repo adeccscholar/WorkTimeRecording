@@ -9,11 +9,15 @@
 if(WIN32)
    set(Boost_ROOT "D:\\local\\boost_1_88_0")
    set(Boost_DIR "D:\\local\\boost_1_88_0\\lib64-msvc-14.3\\cmake\\Boost-1.88.0")
+elseif(UNIX)
+
 endif()
 
 # Aktivieren Sie Hot Reload für MSVC-Compiler, sofern unterstützt.
+if(WIN32)
 cmake_policy(SET CMP0144 NEW)
 cmake_policy(SET CMP0167 NEW)
+endif()
 
 function(configure_boost_for_target target_name boost_version_param required_components)
    add_definitions(-DWno-dev)

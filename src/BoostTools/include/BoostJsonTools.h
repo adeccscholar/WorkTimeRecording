@@ -319,7 +319,7 @@ uint32_t u = value_converter<uint32_t>::convert(jv); // u == 42
 \todo Add optional conversion from string if application JSON may encode numbers as strings.
 */
 template <typename ty>
-   requires std::is_integral_v<ty>&& std::is_unsigned_v<ty> && !std::is_same_v<ty, bool>
+   requires std::is_integral_v<ty>&& std::is_unsigned_v<ty> && (!std::is_same_v<ty, bool>)
 struct value_converter<ty> {
    static ty convert(boost::json::value const& value) {
       if (value.is_uint64()) {
@@ -362,7 +362,7 @@ int32_t i = value_converter<int32_t>::convert(jv); // i == -17
 \todo Add conversion from string where JSON encodes numbers as text, if such data sources must be handled.
 */
 template <typename ty>
-   requires std::is_integral_v<ty>&& std::is_signed_v<ty> && !std::is_same_v<ty, bool>
+   requires std::is_integral_v<ty>&& std::is_signed_v<ty> && (!std::is_same_v<ty, bool>)
 struct value_converter<ty> {
    static ty convert(boost::json::value const& value) {
       if (value.is_uint64()) {

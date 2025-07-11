@@ -62,6 +62,7 @@ void print(WeatherCurrentExtended const& w) {
    std::println("  Böen:         {:10.1f} km/h", w.windgusts_10m);
    std::println("  UV-Index:     {:10.1f}  ({})", w.uv_index, describe_uv_index(w.uv_index));
    std::println("  Wolken:       {:10.0f} %, Tag: {}", w.cloudcover, w.is_day);
+   std::println("  CAPE:         {:10.1f} J/kg", w.cape);
    std::println("  Wettercode:   {:>10}  ({:})", w.weather_code, describe_weather_code(w.weather_code));
    std::println("\n Zusammenfassung:\n{}", generate_weather_summary(w));
 }
@@ -81,8 +82,9 @@ void print(std::vector<WeatherDay> const& data) {
 
 void print(std::vector<WeatherHour> const& data) {
    for (const auto& wh : data) {
-      std::println("{:%d.%m.%Y %X}: Temp {:4.1f} °C, Taupunkt {:4.1f} °C, Wolken: {:3.0f} %, UV: {:3.1f} ({:<9}), Druck: {:4.0f} hPA, Tag: {:<5},  WCode: {:2} ({})",
-         wh.timestamp, wh.temperature_2m, wh.dew_point_2m, wh.cloudcover, wh.uv_index, describe_uv_index(wh.uv_index), wh.surface_pressure,
+      std::println("{:%d.%m.%Y %X}: Temp {:4.1f} °C, Taupunkt {:4.1f} °C, Wolken: {:3.0f} %, UV: {:3.1f} ({:<9}), CAPE: {:8.2f}, Druck: {:4.0f} hPA, Tag: {:<5},  WCode: {:2} ({})",
+         wh.timestamp, wh.temperature_2m, wh.dew_point_2m, wh.cloudcover, wh.uv_index, describe_uv_index(wh.uv_index), 
+         wh.cape, wh.surface_pressure,
          wh.is_day, wh.weather_code, describe_weather_code(wh.weather_code)
       );
    }

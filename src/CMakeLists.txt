@@ -41,7 +41,7 @@ add_subdirectory(IDLGen)
 add_subdirectory(ApplicationServer)
 add_subdirectory(Client)
 
-if(PLATFORM STREQUAL "Windows")
+if(PLATFORM STREQUAL "Windows" OR PLATFORM STREQUAL "Linux")
   add_subdirectory(BoostTools)
   add_subdirectory(WeatherAPI)
   add_subdirectory(WeatherClient_intro)

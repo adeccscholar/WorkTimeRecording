@@ -10,6 +10,7 @@ include (../adecc_boost_settings.cmake)
 
 configure_boost_for_target(BoostTools 1.88 "system;json")
 
+
 target_include_directories(BoostTools
    INTERFACE
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

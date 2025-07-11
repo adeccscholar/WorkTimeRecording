@@ -28,7 +28,7 @@
   \date    05.07.2025
   \author  Volker Hillmann (adecc Systemhaus GmbH)
 
-  \copyright Copyright © 2020 - 2025 adecc Systemhaus GmbH
+  \copyright Copyright Â© 2020 - 2025 adecc Systemhaus GmbH
 
   \licenseblock{GPL-3.0-or-later}
   This program is free software: you can redistribute it and/or modify it
@@ -44,7 +44,7 @@
   along with this program. If not, see https://www.gnu.org/licenses/.
   \endlicenseblock
 
-  \note This file is part of the adecc Scholar project – Free educational materials for modern C++.
+  \note This file is part of the adecc Scholar project - Free educational materials for modern C++.
 
 */
 

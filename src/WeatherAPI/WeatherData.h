@@ -235,6 +235,7 @@ struct WeatherHour {
    std::optional<double> windgusts_10m;        ///< Wind gusts at 10m (km/h).
    std::optional<double> winddirection_10m;    ///< Wind direction at 10m (degrees).
    std::optional<double> uv_index;             ///< UV index.
+   std::optional<double> cape;                 ///< cape value.
    std::optional<bool>   is_day;               ///< Boolean flag indicating if value is during daytime.
 };
 

@@ -8,9 +8,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_definitions(-DBUILD_WITH_QT)
 
-add_compile_options("/bigobj" "/D_CRT_SECURE_NO_WARNINGS")
-add_compile_options("/Zm2000")  # erhöht das Kompilierungstiefe-Limit auf 2000
-
+if(WIN32)
+   add_compile_options("/bigobj" "/D_CRT_SECURE_NO_WARNINGS")
+   add_compile_options("/Zm2000")  # erhöht das Kompilierungstiefe-Limit auf 2000
+else()
+   add_compile_options("-D_CRT_SECURE_NO_WARNINGS")
+endif()
 
 # include (../adecc_tao_settings.cmake)
 include (../adecc_boost_settings.cmake) 

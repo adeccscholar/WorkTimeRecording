@@ -62,7 +62,7 @@ namespace WeatherAPI {
 \return Text description (e.g., "Nord", "North").
 \see WeatherHour, WeatherDay
 */
-inline std::string wind_direction_text(std::optional<double> deg) {
+std::string wind_direction_text(std::optional<double> deg) {
    static constexpr const char* directions[] = {
        "N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO",
        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"
@@ -75,7 +75,7 @@ inline std::string wind_direction_text(std::optional<double> deg) {
 \param speed_kmh Wind speed in km/h.
 \return Pair of German and English Beaufort descriptions.
 */
-inline std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh) {
+std::pair<std::string, std::string> wind_beaufort_text(double speed_kmh) {
    static const RuleSet<double> beaufort = {
        {  0.0,   1.0, {"Windstille", "Calm"}},
        {  1.0,   5.0, {"Leiser Zug", "Light air"}},
@@ -263,15 +263,26 @@ std::string generate_weather_summary(WeatherCurrentExtended const& wh, bool germ
    };
    */
    RuleSet<double> const rain_rules = {
-        {    0.0,   10.0, { "Leichter Regen möglich",                "Light rain possible"             } },
-        {   10.0,   30.0, { "Mäßiger Regen wahrscheinlich",          "Moderate rain likely"            } },
-        {   30.0,   50.0, { "Starker Regen wahrscheinlich",          "Heavy rain likely"               } },
-        {   50.0,  100.0, { "Sehr starker Regen (Unwettergefahr)",   "Very heavy rain (severe weather possible)" } },
-        {  100.0,  300.0, { "Extremer Regen (z. B. Monsun)",          "Extreme rain (e.g., monsoon)"    } },
-        {  300.0, 1800.0, { "Regen im Bereich historischer Rekorde", "Rain within historic world record range" } },
-        { 1800.0, std::numeric_limits<double>::infinity(), { "Noch nie gemessene Regenmenge",  "Rain amount never recorded"      } }
+        {    0.0,   10.0, { "Leichter Regen möglich.",                "Light rain possible."             } },
+        {   10.0,   30.0, { "Mäßiger Regen wahrscheinlich.",          "Moderate rain likely."            } },
+        {   30.0,   50.0, { "Starker Regen wahrscheinlich.",          "Heavy rain likely."               } },
+        {   50.0,  100.0, { "Sehr starker Regen (Unwettergefahr).",   "Very heavy rain (severe weather possible)." } },
+        {  100.0,  300.0, { "Extremer Regen (z. B. Monsun).",          "Extreme rain (e.g., monsoon)."    } },
+        {  300.0, 1800.0, { "Regen im Bereich historischer Rekorde.", "Rain within historic world record range." } },
+        { 1800.0, std::numeric_limits<double>::infinity(), { "Noch nie gemessene Regenmenge.",  "Rain amount never recorded."      } }
       };
    apply_rules(out, wh.precipitation, rain_rules, german);
+
+   RuleSet<double> const cape_rules =  {
+        {    0.0,   100.0, { "Keine Konvektion, stabile Atmosphäre.",         "No convection, stable atmosphere." } },
+        {  100.0,   500.0, { "Geringe Instabilität, Schauer unwahrscheinlich.", "Low instability, showers unlikely." } },
+        {  500.0,  1000.0, { "Mäßige Instabilität, einzelne Gewitter möglich.", "Moderate instability, isolated thunderstorms possible." } },
+        { 1000.0,  2000.0, { "Deutliche Instabilität, erhöhte Gewittergefahr.", "Significant instability, increased thunderstorm risk." } },
+        { 2000.0,  3500.0, { "Hohe Instabilität, Unwettergefahr.",              "High instability, severe weather possible." } },
+        { 3500.0, 99999.0, { "Extreme Instabilität, schwere Unwetter möglich.", "Extreme instability, severe storms likely." } }
+     };
+
+   apply_rules(out, wh.cape, cape_rules, german);
 
    // Luftdruck
    RuleSet<double> pressure_rules = {

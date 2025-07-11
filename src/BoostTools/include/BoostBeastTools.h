@@ -83,7 +83,8 @@ public:
                host_(std::move(host)), port_(std::move(port)) {
       boost::system::error_code ec;
 
-      const auto results = resolver_.resolve(host_, port_, ec);
+     // const auto results = resolver_.resolve(host_, port_, ec);
+      const auto results = resolver_.resolve(boost::asio::ip::tcp::v4(), host_, port_, ec);
       if (ec) {
          throw std::runtime_error(std::format("Failed to resolve {}:{} - {}", host_, port_, ec.message()));
          }
@@ -118,7 +119,8 @@ public:
    void reconnect() {
       boost::system::error_code ec;
       socket_.close(ec);
-      const auto results = resolver_.resolve(host_, port_, ec);
+      // const auto results = resolver_.resolve(host_, port_, ec);
+      const auto results = resolver_.resolve(boost::asio::ip::tcp::v4(), host_, port_, ec);
       if (ec) throw std::runtime_error("Reconnect: resolve failed: " + ec.message());
       boost::asio::connect(socket_, results.begin(), results.end(), ec);
       if (ec) throw std::runtime_error("Reconnect: connect failed: " + ec.message());

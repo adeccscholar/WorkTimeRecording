@@ -212,7 +212,7 @@ std::vector<std::tuple<std::string_view, control_func<WeatherHour>>> WEATHERAPI_
      { "windgusts_10m",        [](auto& wh, auto const& a, auto i) { wh.windgusts_10m = boost_tools::get_value<double, true>(a, i); } },
      { "winddirection_10m",    [](auto& wh, auto const& a, auto i) { wh.winddirection_10m = boost_tools::get_value<double, true>(a, i); } },
      { "uv_index",             [](auto& wh, auto const& a, auto i) { wh.uv_index = boost_tools::get_value<double, true>(a, i); } },
-     { "cape",                 [](auto& wh, auto const& a, auto i) { wh.uv_index = boost_tools::get_value<double, true>(a, i); } }, 
+     { "cape",                 [](auto& wh, auto const& a, auto i) { wh.cape = boost_tools::get_value<double, true>(a, i); } }, 
      { "is_day",               [](auto& wh, auto const& a, auto i) { wh.is_day = boost_tools::get_value<bool, true>(a, i); } }
 };
 
