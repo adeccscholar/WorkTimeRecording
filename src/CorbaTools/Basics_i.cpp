@@ -26,6 +26,8 @@
 
 #include "Tools.h"
 #include "my_logging.h"
+#include <CorbaUtils.h>
+
 
 #include <iostream>
 #include <print>

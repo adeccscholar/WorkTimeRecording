@@ -15,10 +15,11 @@ else()
    add_compile_options("-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
-# include (../adecc_tao_settings.cmake)
+include (../adecc_tao_settings.cmake)
 include (../adecc_boost_settings.cmake) 
 
-set(PROJECT_SOURCES WeatherServer.cpp EventScheduler.h WeatherProxy.h Utility.h)
+set(PROJECT_SOURCES WeatherServer.cpp EventScheduler.h WeatherProxy.h Utility.h
+                    Weather_i.cpp Weather_i.h)
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
 
@@ -33,6 +34,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTP
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools BoostTools WeatherAPI)
+
+# target_link_libraries(${PROJECT_NAME} PRIVATE Weather_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} PRIVATE Weather_Skeletons CorbaTools)
 
 # target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools adeccDatabase adeccTools)
 # target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})

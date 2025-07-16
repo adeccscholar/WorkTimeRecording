@@ -28,6 +28,7 @@
  
 #include "Basics.idl"
 
+
 /// Corba namespace / module for the Organization / Company with IDL defined types and interfaces.
 module Organization {
 

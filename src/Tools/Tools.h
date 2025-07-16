@@ -125,12 +125,14 @@ inline std::string getTimeStamp(std::chrono::time_point<std::chrono::system_cloc
   \see Basics::YearMonthDay
   \see std::chrono::year_month_day
  */
+/*
 inline std::chrono::year_month_day convertTo(Basics::YearMonthDay const& ymd) {
    return std::chrono::year_month_day{ std::chrono::year  { ymd.year },
                                        std::chrono::month { static_cast<unsigned int>(ymd.month) },
                                        std::chrono::day   { static_cast<unsigned int>(ymd.day) }
                                      };
    }
+*/
 
 /**
   \brief Converts a std::chrono::year_month_day to an Organization::YearMonthDay.
@@ -152,6 +154,7 @@ inline std::chrono::year_month_day convertTo(Basics::YearMonthDay const& ymd) {
   \see std::chrono::year_month_day
   \see Organization::YearMonthDay
  */
+/*
 inline Basics::YearMonthDay convertTo(std::chrono::year_month_day const& ymd) {
    Basics::YearMonthDay result;
    result.year  = static_cast<CORBA::Long>(int(ymd.year()));
@@ -159,7 +162,7 @@ inline Basics::YearMonthDay convertTo(std::chrono::year_month_day const& ymd) {
    result.day   = static_cast<CORBA::Short>(unsigned(ymd.day()));
    return result;
    }
-
+*/
 
 /**
   \brief Converts an Organization::TimePoint to a std::chrono::system_clock::time_point.
@@ -182,9 +185,11 @@ inline Basics::YearMonthDay convertTo(std::chrono::year_month_day const& ymd) {
   \see Organization::TimePoint
   \see std::chrono::system_clock::time_point
  */
+/*
 inline std::chrono::system_clock::time_point convertTo(Basics::TimePoint const& tp) {
    return std::chrono::system_clock::time_point(std::chrono::milliseconds(tp.milliseconds_since_epoch));
    }
+*/
 
 /**
   \brief Converts a std::chrono::system_clock::time_point to an Organization::TimePoint.
@@ -207,22 +212,24 @@ inline std::chrono::system_clock::time_point convertTo(Basics::TimePoint const& 
   \see std::chrono::system_clock::time_point
   \see Organization::TimePoint
  */
+/*
 inline Basics::TimePoint converTo(std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now()) {
    auto value_milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
    Basics::TimePoint tp{ .milliseconds_since_epoch = value_milliseconds };
    return tp;
    }
-
+*/
 /**
  \brief Converts a Basics::TimePoint to a formatted string.
 
  \param tp The CORBA TimePoint to convert.
  \return A human-readable timestamp string.
  */
+/*
 inline std::string toString(Basics::TimePoint tp) {
    return getTimeStamp(convertTo(tp));
    }
-
+*/
 /**
    \brief Converts a raw CORBA string (char*) to a std::string and frees the allocated memory.
 
@@ -259,8 +266,8 @@ inline std::string toString(char* s) {
    \param s A constant reference to a `CORBA::String_var` returned by a CORBA operation.
    \return A `std::string` containing the same contents as the CORBA string.
 
-   \note This method is useful when working with CORBA strings in modern C++ codebases and avoids manual memory handling.
- */
+   \note This method is useful when working with CORBA strings in modern C++ codebases and avoids manual memory handling./
+*/
 inline std::string toString(CORBA::String_var const& s) {
    return std::string{ s.in() };  // safe: in() returns const char*, ownership retained
 }
@@ -284,6 +291,7 @@ inline std::string toString(CORBA::String_var const& s) {
 
   \see CORBA::COMM_FAILURE
  */
+/*
 inline std::string toString(CORBA::COMM_FAILURE const& ex) {
    std::ostringstream os;
    os << "CORBA Communication Failure: " << ex << '\n'
@@ -291,6 +299,7 @@ inline std::string toString(CORBA::COMM_FAILURE const& ex) {
       << "Is the NameService running and reachable via ORBInitRef?";
    return os.str();
 }
+*/
 
 /**
   \brief Converts a CORBA::TRANSIENT exception to a detailed human-readable string.
@@ -309,6 +318,7 @@ inline std::string toString(CORBA::COMM_FAILURE const& ex) {
 
   \see CORBA::TRANSIENT
  */
+/*
 inline std::string toString(CORBA::TRANSIENT const& ex) {
    std::ostringstream os;
    os << "CORBA Transient Exception: " << ex << '\n'
@@ -316,6 +326,7 @@ inline std::string toString(CORBA::TRANSIENT const& ex) {
       << "Try again later.";
    return os.str();
 }
+*/
 
 /**
   \brief Converts a CORBA::Exception to a human-readable string.
@@ -334,8 +345,10 @@ inline std::string toString(CORBA::TRANSIENT const& ex) {
 
   \see CORBA::Exception
  */
+/*
 inline std::string toString(CORBA::Exception const& ex) {
    std::ostringstream os;
    os << "CORBA Exception: " << ex;
    return os.str();
 }
+*/

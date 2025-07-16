@@ -38,7 +38,9 @@
 #include "BasicsC.h"
 #include "OrganizationC.h"
 
-#include "Tools.h"
+#include <Tools.h>
+#include <BasicUtils.h>
+#include <CorbaUtils.h>
 
 #include <tao/ORB_Core.h>
 
@@ -86,7 +88,7 @@ inline Organization::EmployeeData* createFrom(EmployeeData const& data) {
    employee_data->name      = CORBA::string_dup(data.name.c_str());
    employee_data->gender    = data.gender;  
    employee_data->isActive  = data.isActive;
-   employee_data->startDate = convertTo(data.startDate);
+   employee_data->startDate = convert<Basics::YearMonthDay>(data.startDate);
    employee_data->salary    = data.salary;
    return employee_data;
    }

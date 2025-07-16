@@ -37,6 +37,9 @@
 #include "my_logging.h"
 #include "Corba_CombiInterface.h"
 
+#include <BasicUtils.h>
+#include <CorbaUtils.h>
+
 #include "Employee_Tools.h"
 
 #include <OrganizationC.h>
@@ -76,7 +79,7 @@ int main(int argc, char *argv[]) {
 
       //auto company = [&factories]() { return std::get<0>(factories.vars());  };
       auto company = [&factories]() { return factories.client().get<0>();  };
-      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convertTo(company()->getTimeStamp())));
+      std::println(std::cout, "Server TimeStamp: {}", getTimeStamp(convert<std::chrono::system_clock::time_point>(company()->getTimeStamp())));
       std::println(std::cout, "Company {}, to paid salaries {:.2f}", company()->nameCompany(), company()->getSumSalary());
       GetEmployee(company(), 105);
       GetEmployees(company());
@@ -86,7 +89,7 @@ int main(int argc, char *argv[]) {
    catch(Organization::EmployeeNotFound const& ex) {
       // Safety net, in case the exception occurs outside the specific try-catch block
       log_error("[{} {}] unhandled 'EmployNotFound'- Exception with Employee ID: {} at {}.", 
-                 strMainClient, ::getTimeStamp(), ex.requestedId, getTimeStamp(convertTo(ex.requestedAt)));
+                 strMainClient, ::getTimeStamp(), ex.requestedId, getTimeStamp(convert<std::chrono::system_clock::time_point>(ex.requestedAt)));
       return 1;
       }
    catch(CORBA::COMM_FAILURE const& ex) {

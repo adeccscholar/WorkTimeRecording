@@ -394,15 +394,8 @@ int main() {
    machine.initiate();
    machine.run();
 
-
-   //std::this_thread::sleep_for(std::chrono::minutes(7));
-   //std::this_thread::sleep_for(std::chrono::hours(2));
-   //std::println("[Main] Sending shutdown event...");
-   //machine.safe_process(EvShutdown{});
-   //auto next_current = NextStep<timepoint_ty>(std::chrono::minutes(1));
-   //machine.scheduler.addEvent({ next_current, [&machine]() { machine.safe_process(EvShutdown{}); } } );
-
    machine.scheduler_thread.join();
+   exit_func = nullptr;
 
    std::println("[Main] Machine exited cleanly.");
    return 0;

@@ -169,7 +169,7 @@ char* Person_i::getFullName() {
 Employee_i::Employee_i(EmployeeData const& data, PortableServer::POA_ptr poa) : 
                      Person_i(static_cast<PersonData const&>(data), poa), DestroyableInterface_i(poa) {
    salary_    = data.salary;
-   startDate_ = convertTo(data.startDate); 
+   startDate_ = convert<Basics::YearMonthDay>(data.startDate); 
    isActive_  = data.isActive;
    log_trace<4>("[Employee_i {}] Object created for id: {}", ::getTimeStamp(), personId());
    }

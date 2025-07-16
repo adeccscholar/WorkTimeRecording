@@ -33,6 +33,8 @@
 
 #include "Tools.h"
 #include "my_logging.h"
+#include <BasicUtils.h>
+#include <CorbaUtils.h>
 
 #include "Corba_Interfaces.h"
 
@@ -59,7 +61,7 @@ using namespace std::string_literals;
  */
 inline std::string getTimeStamp(Organization::Company_ptr comp_in) {
 	if (!CORBA::is_nil(comp_in)) [[likely]] {
-		return getTimeStamp(convertTo(comp_in->getTimeStamp()));
+		return getTimeStamp(convert<std::chrono::system_clock::time_point>(comp_in->getTimeStamp()));
 	   } 
 	else
 		throw std::runtime_error("company is nil");

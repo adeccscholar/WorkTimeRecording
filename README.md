@@ -75,6 +75,14 @@ The goal of this project is to teach the development of modern distributed syste
 - **MS SQL Server**: Relational database  
   - Free Express version or Developer Edition available for developers  
 
+### Disclaimer
+
+In this video/stream, I use software provided through a Visual Studio Professional Subscription from Microsoft. 
+The software shown (e.g., Visual Studio, SQL Server) is used exclusively for demonstration, development, and 
+testing purposes. No production use or redistribution is involved. This content is intended for free educational 
+purposes and is not commercially affiliated with Microsoft.
+
+
 ### Embarcadero C++ Builder
 
 By supporting **Embarcadero C++ Builder** (VCL and FMX), the project demonstrates how older or less modern tools can be integrated into a modern system architecture. This opens up possibilities for connecting existing legacy applications and migrating them step-by-step.

@@ -54,6 +54,8 @@
 
 #include "Tools.h"
 
+#include <BasicTraits.h>
+
 #include <adecc_Database/MyDatabase.h>
 #include <adecc_Database/MyDatabaseExceptions.h>
 

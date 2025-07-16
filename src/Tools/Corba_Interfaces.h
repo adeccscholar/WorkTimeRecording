@@ -69,6 +69,7 @@
 #pragma once
 
 #include "my_logging.h"
+#include <CorbaUtils.h>
 #include "Corba_Nameservice.h"
 
 #include "tao/Object.h"

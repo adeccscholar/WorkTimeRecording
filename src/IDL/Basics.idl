@@ -46,6 +46,59 @@ module Basics {
       };
 
    /**
+     \brief Represents a point in time as in milliseconds.
+   */
+   struct Time {
+      long long milliseconds_since_epoch;  ///< milliseconds since 0:00 of a Day in UTM.
+   };
+
+
+   struct Optional_TimePoint {
+      boolean      has_value;
+      TimePoint    value;
+   };
+
+   struct Optional_YearMonthDay {
+      boolean      has_value;
+      YearMonthDay value;
+   };
+
+   struct Optional_Date {
+      boolean      has_value;
+      Time         value;
+      };
+
+   struct Optional_Double {
+      boolean      has_value;
+      double       value;
+      };
+
+   struct Optional_Short {
+      boolean      has_value;
+      short        value;
+      };
+
+   struct Optional_Long {
+      boolean      has_value;
+      long         value;
+      };
+
+   struct Optional_LongLong {
+      boolean      has_value;
+      long long    value;
+      };
+
+   struct Optional_Bool {
+      boolean      has_value;
+      boolean      value;
+      };
+
+   struct Optional_String {
+      boolean      has_value;
+      string       value;
+      };
+
+   /**
      \brief Interface for all servants which can be delete from client
     */
    interface DestroyableInterface {
