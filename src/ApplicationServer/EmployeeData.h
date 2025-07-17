@@ -88,7 +88,7 @@ inline Organization::EmployeeData* createFrom(EmployeeData const& data) {
    employee_data->name      = CORBA::string_dup(data.name.c_str());
    employee_data->gender    = data.gender;  
    employee_data->isActive  = data.isActive;
-   employee_data->startDate = convert<Basics::YearMonthDay>(data.startDate);
+   employee_data->startDate = convert<Basics::Date>(data.startDate);
    employee_data->salary    = data.salary;
    return employee_data;
    }

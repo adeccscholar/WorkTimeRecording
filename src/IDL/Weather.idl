@@ -3,8 +3,8 @@
 module WeatherAPI{
 
    interface WeatherService {
-      readonly attribute Basics::Optional_TimePoint sunrise;
-      readonly attribute Basics::Optional_TimePoint sunset;
+      readonly attribute Basics::Optional_Time   sunrise;
+      readonly attribute Basics::Optional_Time   sunset;
       readonly attribute Basics::Optional_Double temperature;
       readonly attribute Basics::Optional_Double pressure;
       readonly attribute Basics::Optional_Double humidity;

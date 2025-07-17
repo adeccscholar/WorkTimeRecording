@@ -122,7 +122,7 @@ std::string fetch_weather_json(WeatherResolution resolution, double latitude, do
                      "winddirection_10m,uv_index,is_day";
          break;
 
-      default: std::runtime_error("not implemented.");
+      default: throw std::runtime_error("not implemented.");
       }
 
    const auto results = resolver.resolve(host, port);

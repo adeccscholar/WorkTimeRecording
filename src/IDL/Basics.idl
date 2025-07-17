@@ -39,7 +39,7 @@ module Basics {
     /**
       \brief Represents a calendar date using year, month, and day.
     */	   
-   struct YearMonthDay {
+   struct Date {
       long year;   ///< Full year, e.g., 2025
       short month; ///< Month [1–12]
       short day;   ///< Day [1–31]
@@ -49,7 +49,7 @@ module Basics {
      \brief Represents a point in time as in milliseconds.
    */
    struct Time {
-      long long milliseconds_since_epoch;  ///< milliseconds since 0:00 of a Day in UTM.
+      long long milliseconds;  ///< milliseconds since 0:00 of a Day in UTM.
    };
 
 
@@ -58,12 +58,12 @@ module Basics {
       TimePoint    value;
    };
 
-   struct Optional_YearMonthDay {
+   struct Optional_Date {
       boolean      has_value;
-      YearMonthDay value;
+      Date         value;
    };
 
-   struct Optional_Date {
+   struct Optional_Time {
       boolean      has_value;
       Time         value;
       };

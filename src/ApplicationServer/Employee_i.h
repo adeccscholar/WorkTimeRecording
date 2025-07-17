@@ -140,13 +140,13 @@ public:
    /// \{
 
    virtual CORBA::Double salary() override;
-   virtual Basics::YearMonthDay startDate() override;
+   virtual Basics::Date startDate() override;
    virtual CORBA::Boolean isActive() override;
 
    /// \}
 
 private:
-   double salary_ = 0.0;                           ///< Current salary (in company currency unit)
-   Basics::YearMonthDay startDate_ = { 0, 0, 0 };  ///< Start date in Year-Month-Day format
-   CORBA::Boolean isActive_ = false;               ///< Employment status (active/inactive)
+   double         salary_ = 0.0;              ///< Current salary (in company currency unit)
+   Basics::Date   startDate_ = { 0, 0, 0 };  ///< Start date in Year-Month-Day format
+   CORBA::Boolean isActive_ = false;         ///< Employment status (active/inactive)
 };

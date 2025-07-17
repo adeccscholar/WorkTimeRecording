@@ -64,14 +64,14 @@ module Organization {
 	  \details Person and Employee Data are combined for an easier use.
     */
 	struct EmployeeData {
-        long                 personId;     ///< Unique person ID
-        string               firstName;    ///< First name of the person
-        string               name;         ///< Last name (surname) of the person
-        EGender              gender;       ///< Gender of the person
+        long           personId;     ///< Unique person ID
+        string         firstName;    ///< First name of the person
+        string         name;         ///< Last name (surname) of the person
+        EGender        gender;       ///< Gender of the person
 
-        double               salary;       ///< Current salary [should be greater as 0.0 when Employee currently active]
-        Basics::YearMonthDay startDate;    ///< Start date of employment
-        boolean              isActive;     ///< Whether the employee is currently active
+        double         salary;       ///< Current salary [should be greater as 0.0 when Employee currently active]
+        Basics::Date   startDate;    ///< Start date of employment
+        boolean        isActive;     ///< Whether the employee is currently active
 	   }; 
 
    /**
@@ -121,9 +121,9 @@ module Organization {
           \name Attributes and functions which part of employee representation
 		    \{
 		  */		
-        readonly attribute double               salary;      ///< Current salary of employee [should be greater as 0.0 when Employee currently active]
-        readonly attribute Basics::YearMonthDay startDate;   ///< Date the employee started
-        readonly attribute boolean              isActive;    ///< Whether the employee is currently active
+        readonly attribute double       salary;      ///< Current salary of employee [should be greater as 0.0 when Employee currently active]
+        readonly attribute Basics::Date startDate;   ///< Date the employee started
+        readonly attribute boolean      isActive;    ///< Whether the employee is currently active
 		
 		/// \}
 		

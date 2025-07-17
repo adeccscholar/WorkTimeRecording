@@ -90,7 +90,7 @@ private:
    HttpRequest server;
 
    std::optional<WeatherAPI::date_ty>       last_day{};     ///< Last fetched calendar day
-   std::optional<timepoint_ty>  last_weather{}; ///< Last fetched weather timestamp
+   std::optional<WeatherAPI::timepoint_ty>  last_weather{}; ///< Last fetched weather timestamp
 
    std::shared_timed_mutex  mutex;
    WeatherData weather_data;

@@ -169,7 +169,7 @@ char* Person_i::getFullName() {
 Employee_i::Employee_i(EmployeeData const& data, PortableServer::POA_ptr poa) : 
                      Person_i(static_cast<PersonData const&>(data), poa), DestroyableInterface_i(poa) {
    salary_    = data.salary;
-   startDate_ = convert<Basics::YearMonthDay>(data.startDate); 
+   startDate_ = convert<Basics::Date>(data.startDate); 
    isActive_  = data.isActive;
    log_trace<4>("[Employee_i {}] Object created for id: {}", ::getTimeStamp(), personId());
    }
@@ -195,7 +195,7 @@ CORBA::Double Employee_i::salary() {
  /// \brief Returns the employment start date.
 ///
 /// \return A `Basics::YearMonthDay` object representing the starting date of employment.
-Basics::YearMonthDay Employee_i::startDate() {
+Basics::Date Employee_i::startDate() {
    return startDate_;
    }
 

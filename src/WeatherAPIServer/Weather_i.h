@@ -12,8 +12,8 @@ public:
    explicit WeatherService_i(WeatherProxy::WeatherData const& aData) : mData(aData) {}
 
    // Getter-Methoden gem‰ﬂ IDL
-   Basics::Optional_TimePoint sunrise() override;
-   Basics::Optional_TimePoint sunset() override;
+   Basics::Optional_Time      sunrise() override;
+   Basics::Optional_Time      sunset() override;
    Basics::Optional_Double    temperature() override;
    Basics::Optional_Double    pressure() override;
    Basics::Optional_Double    humidity() override;
