@@ -7,6 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # --- Interface-Library (nur für Client) ---
 add_library(CorbaToolsHeader INTERFACE)
 
+add_dependencies(CorbaToolsHeader Basics_Stubs)
+
 # Nur öffentlicher Include-Pfad (mit ausgewählten Headern wie BasicTraits.h)
 target_include_directories(CorbaToolsHeader INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> )
 
@@ -20,6 +22,8 @@ set(PROJECT_SOURCES Basics_i.cpp Basics_i.h
                     include/BasicTraits.h )
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_SOURCES})
+
+add_dependencies(${PROJECT_NAME} Basics_Skeletons)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC CorbaToolsHeader ProjectTools
                                       PRIVATE Basics_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})

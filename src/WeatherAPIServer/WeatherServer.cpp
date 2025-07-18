@@ -2,6 +2,9 @@
 #include "EventScheduler.h"
 #include "WeatherProxy.h"
 #include "Utility.h"
+#include "Weather_i.h"
+
+#include <Corba_Interfaces.h>
 
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
@@ -377,13 +380,18 @@ void signal_handler(int sig_num) {
    if (exit_func) exit_func();
    }
    
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);
 #endif
    WeatherProxy weather_data;
    TimedEvents::Scheduler  scheduler;
    FetchWeatherMachine machine(weather_data, scheduler);
+   std::atomic<bool> shutdown_requested = false;
+
+   CORBAServer<WeatherService_i> weather_corba("WeatherCentral", argc, argv);
+   WeatherService_i* service = new WeatherService_i(weather_data.weather_data);
+   weather_corba.register_servant<0>("WeatherAPI", service);
 
    exit_func = [&machine]() { machine.safe_process(EvShutdown{}); };
    signal(SIGINT, signal_handler);
@@ -392,9 +400,12 @@ int main() {
    std::println(std::cout, "server to use the open-meteo.com Rest API");
  
    machine.initiate();
+
    machine.run();
+   weather_corba.run(shutdown_requested);
 
    machine.scheduler_thread.join();
+   shutdown_requested = true;
    exit_func = nullptr;
 
    std::println("[Main] Machine exited cleanly.");

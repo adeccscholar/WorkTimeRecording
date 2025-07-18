@@ -64,7 +64,10 @@
 #include <format>
 #include <system_error>
 
+//class WeatherService_i;
+
 class WeatherProxy {
+   friend class WeatherService_i;
 public:
    using timepoint_ty = std::chrono::local_time<std::chrono::seconds>;
 
@@ -93,6 +96,7 @@ private:
    std::optional<WeatherAPI::timepoint_ty>  last_weather{}; ///< Last fetched weather timestamp
 
    std::shared_timed_mutex  mutex;
+
    WeatherData weather_data;
    
 public:

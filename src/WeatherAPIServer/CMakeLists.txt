@@ -23,7 +23,7 @@ set(PROJECT_SOURCES WeatherServer.cpp EventScheduler.h WeatherProxy.h Utility.h
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
 
-add_dependencies(${PROJECT_NAME} WeatherAPI)
+add_dependencies(${PROJECT_NAME} WeatherAPI CorbaTools Weather_Skeletons)
 
 # configure_boost_for_target(${PROJECT_NAME} 1.87 "system;json")
 					
