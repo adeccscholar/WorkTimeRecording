@@ -52,6 +52,8 @@
 
 #pragma once
 
+#include "Weather_i.h"
+
 #include <WeatherData.h>
 #include <WeatherReader.h>
 #include <WeatherPrint.h>
@@ -64,28 +66,26 @@
 #include <format>
 #include <system_error>
 
-//class WeatherService_i;
+struct WeatherProxyData {
+   std::optional<WeatherAPI::time_ty> sunrise;
+   std::optional<WeatherAPI::time_ty> sunset;
+   std::optional<double> temperature;
+   std::optional<double> pressure;
+   std::optional<double> humidity;
+   std::optional<double> precipitation;
+   std::optional<double> windspeed;
+   std::optional<double> winddirection;
+   std::optional<double> cloudcover;
+   std::optional<double> uv_index;
+   std::optional<int>    weathercode;
+   std::optional<std::string> summary;
+   };
 
 class WeatherProxy {
-   friend class WeatherService_i;
+friend class WeatherService_i;
 public:
    using timepoint_ty = std::chrono::local_time<std::chrono::seconds>;
 
-   struct WeatherData {
-      std::optional<WeatherAPI::time_ty> sunrise;
-      std::optional<WeatherAPI::time_ty> sunset;
-      std::optional<double> temperature;
-      std::optional<double> pressure;
-      std::optional<double> humidity;
-      std::optional<double> precipitation;
-      std::optional<double> windspeed;
-      std::optional<double> winddirection;
-      std::optional<double> cloudcover;
-      std::optional<double> uv_index;
-      std::optional<int>    weathercode;
-      std::optional<std::string> summary;
-
-      };
 private:
    const double latitude  = 52.5366923;  ///< Fixed latitude for weather data
    const double longitude = 13.2027663;  ///< Fixed longitude for weather data
@@ -97,7 +97,7 @@ private:
 
    std::shared_timed_mutex  mutex;
 
-   WeatherData weather_data;
+   WeatherProxyData weather_data;
    
 public:
    /**
@@ -206,7 +206,7 @@ public:
      \brief Thread-safe read access to current weather data
      \returns WeatherData copy if lock could be acquired, otherwise std::nullopt
    */
-   std::optional<WeatherData> GetWeatherData() {
+   std::optional<WeatherProxyData> GetWeatherData() {
       //if (mutex.try_lock_shared_for(std::chrono::milliseconds(100))) {
       //   std::shared_lock lock(mutex, std::adopt_lock);
       std::shared_lock lock(mutex, std::defer_lock);

@@ -1,7 +1,10 @@
 #include "Weather_i.h"
+#include "WeatherProxy.h"
 
 #include <BasicTraits.h>
 #include <BasicUtils.h>
+
+WeatherService_i::WeatherService_i(WeatherProxy const& aData) : mData(aData.weather_data) {}
 
 
 Basics::Optional_Time WeatherService_i::sunrise() {

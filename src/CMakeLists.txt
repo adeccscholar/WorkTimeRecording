@@ -50,6 +50,8 @@ if(PLATFORM STREQUAL "Windows" OR PLATFORM STREQUAL "Linux")
   add_subdirectory(WeatherAPIServer)
 endif()
 
+add_subdirectory(WeatherAPIClient)
+
 if(PLATFORM STREQUAL "Raspberry")
    add_subdirectory(RaspberryTerminal)
 endif()

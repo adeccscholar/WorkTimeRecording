@@ -5,6 +5,7 @@
 #include "Weather_i.h"
 
 #include <Corba_Interfaces.h>
+#include <CorbaEvent.h>
 
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
@@ -37,6 +38,7 @@ namespace mpl = boost::mpl;
 //using timepoint_ty = std::chrono::sys_seconds; //   std::chrono::system_clock::time_point;
 using timepoint_ty = std::chrono::local_time<std::chrono::seconds>;
 
+std::atomic<bool> shutdown_requested = false;
 
 struct EvStart       : sc::event<EvStart> {};
 struct EvIdle        : sc::event<EvIdle> {};
@@ -53,55 +55,6 @@ struct OnState;
    struct OnCurrentState;
 struct StoppingState;
 
-/*
-struct FetchWeatherMachine : sc::state_machine<FetchWeatherMachine, OffState> {
-   WeatherProxy& api;
-   TimedEvents::Scheduler& scheduler;
-   std::atomic_bool running = true;
-   std::thread scheduler_thread;
-
-   FetchWeatherMachine(WeatherProxy& a, TimedEvents::Scheduler& s) : api(a), scheduler(s) {}
-
-   template <typename event_ty>
-   void safe_process(event_ty&& ev) {
-      try {
-         process_event(std::forward<event_ty>(ev));
-         }
-      catch (std::exception const& ex) {
-         std::println("[FetchWeatherMachine] process_event error: {}", ex.what());
-         }
-      }
-
-   void run() {
-      if (scheduler_thread.joinable()) {
-         throw std::runtime_error("Thread already running");
-         }
-
-      if (state_cast<const OffState*>() != nullptr) {
-         safe_process(EvStart{});
-         }
-
-      scheduler_thread = std::thread([this]() {
-         while (running) {
-            auto next = NextStep<timepoint_ty>(std::chrono::minutes{ 1 });
-            auto sleep_for = SecondsTo(next);
-            if (sleep_for > std::chrono::seconds{ 0 })
-               std::this_thread::sleep_for(sleep_for);
-
-            while (running) {
-               if (auto ev = scheduler.pollEvent(running)) {
-                  ev->trigger();
-                  }
-               else {
-                  break; // Keine Events mehr: aus der Schleife, wieder schlafen
-                  }
-               }
-            }
-         });
-      }
-
-   };
-*/
 
 /**
   \brief Weather fetch state machine integrating with timed event scheduling
@@ -378,6 +331,7 @@ void signal_handler(int sig_num) {
    std::println(std::cout);
    std::println(std::cout, "[signal handler] signal {} received. Requesting shutdown ...", sig_num);
    if (exit_func) exit_func();
+   shutdown_requested = true;
    }
    
 int main(int argc, char* argv[]) {
@@ -387,11 +341,10 @@ int main(int argc, char* argv[]) {
    WeatherProxy weather_data;
    TimedEvents::Scheduler  scheduler;
    FetchWeatherMachine machine(weather_data, scheduler);
-   std::atomic<bool> shutdown_requested = false;
 
    CORBAServer<WeatherService_i> weather_corba("WeatherCentral", argc, argv);
-   WeatherService_i* service = new WeatherService_i(weather_data.weather_data);
-   weather_corba.register_servant<0>("WeatherAPI", service);
+   WeatherService_i* service = new WeatherService_i(weather_data);
+   weather_corba.register_servant<0>("GlobalCorp/WeatherAPI", service);
 
    exit_func = [&machine]() { machine.safe_process(EvShutdown{}); };
    signal(SIGINT, signal_handler);

@@ -1,15 +1,18 @@
 #pragma once
 
-#include "WeatherProxy.h"
+//#include "WeatherProxy.h"
 
 #include <WeatherS.h>
 #include <BasicsC.h>
 #include <optional>
 #include <string>
 
+class WeatherProxy;
+struct WeatherProxyData;
+
 class WeatherService_i : public virtual POA_WeatherAPI::WeatherService {
 public:
-   explicit WeatherService_i(WeatherProxy::WeatherData const& aData) : mData(aData) {}
+   explicit WeatherService_i(WeatherProxy const&);
 
    // Getter-Methoden gem‰ﬂ IDL
    Basics::Optional_Time      sunrise() override;
@@ -26,5 +29,5 @@ public:
    Basics::Optional_String*   summary() override;  // internal char* forced pointer to corba managed heap
 
 private:
-   WeatherProxy::WeatherData const& mData;
+   WeatherProxyData const& mData;
 };

@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.26)
+
+project(WeatherAPIClient)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+include (../adecc_tao_settings.cmake)
+
+set(PROJECT_SOURCES WeatherAPIClient.cpp)
+					
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
+
+message(STATUS ${OUTPUT_DIR})
+
+set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+include_directories(${CMAKE_SOURCE_DIR})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools CorbaToolsHeader)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE Weather_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})
+
+
+
