@@ -3,11 +3,14 @@
 
 #include <BasicTraits.h>
 #include <BasicUtils.h>
+#include <CorbaAccessor.h>
 
 WeatherService_i::WeatherService_i(WeatherProxy const& aData) : mData(aData.weather_data) {}
 
 
 Basics::Optional_Time WeatherService_i::sunrise() {
+   //CorbaValueWrapper<WeatherAPI::time_ty> value(mData.sunrise);
+   //return value.Return<Basics::Optional_Time>();
    return CorbaAccessor<Basics::Optional_Time>::Return(mData.sunrise);
    }
 

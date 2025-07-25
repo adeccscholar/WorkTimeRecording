@@ -20,6 +20,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
+target_link_libraries(${PROJECT_NAME} PRIVATE CorbaToolsHeader)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GPIOD_LIBRARIES} ProjectTools RaspberryTools)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Stubs ${ACE_LIBRARIES} ${TAO_LIBRARIES})

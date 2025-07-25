@@ -22,7 +22,7 @@ include(../adecc_qt_settings.cmake)
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE CorbaTools)
+target_link_libraries(${PROJECT_NAME} PRIVATE CorbaTools CorbaToolsHeader)
 target_link_libraries(${PROJECT_NAME} PRIVATE ProjectTools adeccDatabase adeccTools)
 target_link_libraries(${PROJECT_NAME} PRIVATE Organization_Skeletons ${ACE_LIBRARIES} ${TAO_LIBRARIES})
 

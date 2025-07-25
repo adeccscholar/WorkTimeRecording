@@ -2,9 +2,10 @@
 #include "Sensoring.h"
 
 #include "Tools.h"
+#include "BasicUtils.h"
 
 #include "OrganizationC.h"
-#include "Corba_Interfaces.h"
+#include <Corba_Interfaces.h>
 
 #include <tao/corba.h>
 #include <orbsvcs/CosNamingC.h>
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]) {
    catch (Organization::EmployeeNotFound const& ex) {
       // Safety net, in case the exception occurs outside the specific try-catch block
       log_error("[{} {}] unhandled 'EmployNotFound'- Exception with Employee ID: {} at {}.",
-         strAppl, ::getTimeStamp(), ex.requestedId, getTimeStamp(convertTo(ex.requestedAt)));
+         strAppl, ::getTimeStamp(), ex.requestedId, getTimeStamp(convert<std::chrono::system_clock::time_point>(ex.requestedAt)));
       return 1;
       }
    catch (CORBA::COMM_FAILURE const& ex) {

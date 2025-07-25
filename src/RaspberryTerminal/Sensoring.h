@@ -112,12 +112,13 @@ public:
 };
 
 class TimeTracking {
-   static constinit const std::array<unsigned int, 3> inline led_lights{ 13, 19, 26 };
-   static constinit const std::array<unsigned int, 3> inline buttons{ 20, 21 };
-   static constinit const unsigned int                inline beeper{ 12 };
-   static constinit const unsigned int                inline reset_pin{ 25 }; // reset pin for rfid
-   static constinit const unsigned int                inline move_pin{ 15 };  // motion decector
+   static constinit const std::array<unsigned int, 3> inline led_lights { 13, 19, 26 };
+   static constinit const std::array<unsigned int, 3> inline buttons { 20, 21 };
+   static constinit const unsigned int                inline beeper { 12 };
+   static constinit const unsigned int                inline reset_pin { 25 }; // reset pin for rfid
+   static constinit const unsigned int                inline move_pin { 15 };  // motion decector
 
+   static constinit const std::array<unsigned int, 2> inline relais_pin { 18, 23 };
 
    std::unique_ptr<gpiod::chip>         chip;
    std::unique_ptr<gpiod::line_request> output_request;
@@ -139,6 +140,7 @@ public:
       std::ranges::copy(led_lights, std::back_inserter(lines));
       lines.emplace_back(beeper);
       lines.emplace_back(reset_pin);
+      std::ranges::copy(relais_pin, std::back_inserter(lines));
 
       gpiod::line_request _request = chip->prepare_request()
          .set_consumer("time tracking output")
@@ -156,6 +158,9 @@ public:
          .do_request();
       input_request = std::make_unique<gpiod::line_request>(std::move(_request));
 
+
+      output_request->set_value(relais_pin[0], gpiod::line::value::INACTIVE);
+      output_request->set_value(relais_pin[1], gpiod::line::value::INACTIVE);
 
       std::cout << "Chip Information: " << chip->get_info() << '\n';
       std::cout << *output_request << '\n';
@@ -184,11 +189,16 @@ public:
       auto old_val = gpiod::line::value::INACTIVE;
       while (running) {
          if (response.wait_edge_events(std::chrono::milliseconds(500))) {
-            if (auto val = input_request->get_value(15); val == gpiod::line::value::ACTIVE)
+            if (auto val = input_request->get_value(15); val == gpiod::line::value::ACTIVE) {
                std::println(std::cout, "presence");
-            else
+               output_request->set_value(relais_pin[0], gpiod::line::value::ACTIVE);
+               output_request->set_value(relais_pin[1], gpiod::line::value::ACTIVE);
+               } 
+            else {
                std::println(std::cout, "absence");
-            
+               output_request->set_value(relais_pin[0], gpiod::line::value::INACTIVE);
+               output_request->set_value(relais_pin[1], gpiod::line::value::INACTIVE);
+               }
             response.read_edge_events(buffer);
             for (auto const& event : buffer) {
 
@@ -210,8 +220,16 @@ public:
          else {
             if (auto val = input_request->get_value(15); val != old_val) {
                output_request->set_value(beeper, gpiod::line::value::ACTIVE);
-               if(val == gpiod::line::value::ACTIVE)  std::println(std::cout, "presence");
-               else                                   std::println(std::cout, "absence");
+               if(val == gpiod::line::value::ACTIVE)  {
+                  std::println(std::cout, "presence");
+                  output_request->set_value(relais_pin[0], gpiod::line::value::ACTIVE);
+                  output_request->set_value(relais_pin[1], gpiod::line::value::ACTIVE);
+                  }
+               else {
+                  std::println(std::cout, "absence");
+                  output_request->set_value(relais_pin[0], gpiod::line::value::INACTIVE);
+                  output_request->set_value(relais_pin[1], gpiod::line::value::INACTIVE);
+                  }
                sensors.readSensors();
                std::this_thread::sleep_for(std::chrono::milliseconds(300));
                output_request->set_value(beeper, gpiod::line::value::INACTIVE);

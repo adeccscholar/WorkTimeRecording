@@ -14,25 +14,6 @@
 /// \note Optional-Logik wird über dedizierte CorbaOptionalTraits<> abgebildet.
 
 
-// ============================================================================
-// Konzepte
-// ============================================================================
-
-template<typename ty>
-concept CorbaOptionalStruct = requires(ty t) {
-   { t.has_value } -> std::convertible_to<CORBA::Boolean>;
-   { t.value };
-};
-
-template<typename ty>
-concept CorbaBuiltin = std::is_arithmetic_v<ty>;
-
-template<typename ty>
-concept CorbaCharPointer = std::is_same_v<std::remove_cvref_t<ty>, char*>;
-
-template<typename ty>
-concept CorbaValueStruct = std::is_class_v<ty> && !CorbaOptionalStruct<ty> && !CorbaBuiltin<ty>;
-
 
 // ============================================================================
 // Value Traits (nicht optional)
@@ -45,16 +26,17 @@ template<typename ty>
 struct CorbaValueTraits;
 
 // Builtin-Typen
-
 template<CorbaBuiltin ty>
 struct CorbaValueTraitsImpl<ty> {
    using value_type = ty;
    static bool HasValue(value_type const&) { return true; }
    static value_type const& GetValue(value_type const& v) { return v; }
-   template<typename U>
+
+   template<typename U> requires ConvertibleTo<U, value_type>
    static void SetValue(value_type& target, U const& val) {
       target = convert<value_type>(val);
-      }
+   }
+
    static void Reset(value_type& target) { target = ty{}; }
 };
 
@@ -62,10 +44,10 @@ template<CorbaBuiltin ty>
 struct CorbaValueTraits<ty> : CorbaValueTraitsImpl<ty> {};
 
 // Strings (char*)
-
 template<>
 struct CorbaValueTraitsImpl<char*> {
    using value_type = std::string;
+
    static bool HasValue(char const* sz) { return sz && sz[0] != '\0'; }
    static std::string GetValue(char const* sz) { return sz ? std::string(sz) : std::string{}; }
 
@@ -75,12 +57,15 @@ struct CorbaValueTraitsImpl<char*> {
    }
 
    static void Reset(char*& target) {
-      if (target) { CORBA::string_free(target); target = nullptr; }
+      if (target) {
+         CORBA::string_free(target);
+         target = nullptr;
+      }
    }
 
-   static std::string GetAndFree(char* sz) {
+   static std::string GetAndFree(char*& sz) {
       std::string result = GetValue(sz);
-      CORBA::string_free(sz);
+      Reset(sz);
       return result;
    }
 };
@@ -91,14 +76,18 @@ struct CorbaValueTraits<char*> : CorbaValueTraitsImpl<char*> {};
 template<>
 struct CorbaValueTraits<std::string> : CorbaValueTraitsImpl<char*> {};
 
-// CORBA Value-Structs (inkl. TimePoint)
-
+// Value-Structs
 template<CorbaValueStruct ty>
 struct CorbaValueTraits<ty> {
    using value_type = ty;
    static bool HasValue(value_type const&) { return true; }
    static value_type const& GetValue(value_type const& v) { return v; }
-   static void SetValue(value_type& target, value_type const& v) { target = v; }
+
+   template<typename U> requires ConvertibleTo<U, value_type>
+   static void SetValue(value_type& target, U const& val) {
+      target = convert<value_type>(val);
+   }
+
    static void Reset(value_type& target) { target = value_type{}; }
 };
 
@@ -117,12 +106,11 @@ struct CorbaOptionalTraits<ty> {
    static bool HasValue(ty const& opt) { return opt.has_value != 0; }
    static value_type const& GetValue(ty const& opt) { return opt.value; }
 
-   template<typename U>
+   template<typename U> requires ConvertibleTo<U, value_type>
    static void SetValue(ty& opt, U const& val) {
       opt.value = convert<value_type>(val);
       opt.has_value = true;
    }
-
 
    static void Reset(ty& opt) {
       opt.value = value_type{};
@@ -130,8 +118,7 @@ struct CorbaOptionalTraits<ty> {
    }
 };
 
-// Optional_String (speziell)
-
+// Optional_String (explizit)
 template<>
 struct CorbaOptionalTraits<Basics::Optional_String> {
    using value_type = std::string;
@@ -157,60 +144,79 @@ struct CorbaOptionalTraits<Basics::Optional_String> {
 
 
 // ============================================================================
-// Traits-Schnittstelle (CorbaAccessor)
+// Traits-Schnittstelle: CorbaAccessor für value und optional
 // ============================================================================
 
 template<typename ty, typename = void>
 struct CorbaAccessor;
 
-// Value-Typen
-
+// ----------------------------------------------------------
+// Accessor für normale CORBA Value-Typen (auch Strings)
+// ----------------------------------------------------------
 template<typename ty>
-struct CorbaAccessor<ty, std::void_t<typename CorbaValueTraits<ty>::value_type>> {
+   requires requires { typename CorbaValueTraits<ty>::value_type; }
+struct CorbaAccessor<ty> {
    using traits = CorbaValueTraits<ty>;
    using value_type = typename traits::value_type;
 
-   static bool Has(ty const& v) { return traits::HasValue(v); }
-   static value_type Get(ty const& v) { return traits::GetValue(v); }
-   static void Set(ty& v, value_type const& val) { traits::SetValue(v, val); }
-   static void Reset(ty& v) { traits::Reset(v); }
+   static bool Has(ty const& val) {
+      return traits::HasValue(val);
+   }
 
-   template<typename to_ty>
-   struct CorbaOptionalTraits {
-      template<typename from_ty>
-      static void SetValue(to_ty& aTarget, from_ty const& aValue) {
-         if constexpr (is_std_optional_v<from_ty>) {
-            if (aValue)
-               aTarget = convert<typename to_ty::value_type>(*aValue);
-            else
-               aTarget = to_ty{}; // leer
-         }
-         else {
-            aTarget = convert<typename to_ty::value_type>(aValue);
-         }
-      }
-   };
+   static value_type Get(ty const& val) {
+      return traits::GetValue(val);
+   }
+
+   template<typename U>
+      requires ConvertibleTo<U, value_type>
+   static void Set(ty& target, U const& val) {
+      traits::SetValue(target, val);
+   }
+
+   static void Reset(ty& val) {
+      traits::Reset(val);
+   }
+
+   static ty Return(value_type const& val) {
+      ty result{};
+      Set(result, val);
+      return result;
+   }
 
    static std::string GetAndFree(ty& value) requires CorbaCharPointer<ty> {
       return CorbaValueTraits<char*>::GetAndFree(value);
    }
 };
 
-// Optional-Typen
-
+// ----------------------------------------------------------
+// Accessor für CORBA Optional-Typen
+// ----------------------------------------------------------
 template<typename ty>
-struct CorbaAccessor<ty, std::void_t<typename CorbaOptionalTraits<ty>::value_type>> {
+   requires requires { typename CorbaOptionalTraits<ty>::value_type; }
+struct CorbaAccessor<ty> {
    using traits = CorbaOptionalTraits<ty>;
    using value_type = typename traits::value_type;
 
-   static bool Has(ty const& v) { return traits::HasValue(v); }
-   static value_type Get(ty const& v) { return traits::GetValue(v); }
+   static bool Has(ty const& val) {
+      return traits::HasValue(val);
+   }
+
+   static value_type Get(ty const& val) {
+      return traits::GetValue(val);
+   }
 
    template<typename U>
-   static void Set(ty& v, U const& val) { traits::SetValue(v, val); }
-   static void Reset(ty& v) { traits::Reset(v); }
+      requires ConvertibleTo<U, value_type>
+   static void Set(ty& target, U const& val) {
+      traits::SetValue(target, val);
+   }
+
+   static void Reset(ty& val) {
+      traits::Reset(val);
+   }
 
    template<typename U>
+      requires ConvertibleTo<U, value_type> || is_std_optional_v<U>
    static ty Return(U const& val) {
       ty result{};
       if constexpr (is_std_optional_v<U>) {
@@ -231,76 +237,3 @@ struct CorbaAccessor<ty, std::void_t<typename CorbaOptionalTraits<ty>::value_typ
       return result;
    }
 };
-
-
-// ============================================================================
-// Utility-Funktionen (Inline, generisch)
-// ============================================================================
-
-template<CorbaOptionalStruct Opt>
-inline void SetOptionalValue(Opt& opt, typename CorbaOptionalTraits<Opt>::value_type const& val) {
-   CorbaOptionalTraits<Opt>::SetValue(opt, val);
-}
-
-template<CorbaOptionalStruct Opt>
-inline auto GetOptionalValue(Opt const& opt) {
-   return CorbaOptionalTraits<Opt>::GetValue(opt);
-}
-
-template<CorbaValueStruct Val>
-inline void SetValue(Val& val, typename CorbaValueTraits<Val>::value_type const& value) {
-   CorbaValueTraits<Val>::SetValue(val, value);
-   }
-
-template<CorbaValueStruct Val>
-inline auto GetValue(Val const& val) {
-   return CorbaValueTraits<Val>::GetValue(val);
-   }
-
-template<typename ty> requires CorbaBuiltin<ty>
-inline void SetValue(ty& v, ty const& val) { v = val; }
-
-template<typename ty> requires CorbaBuiltin<ty>
-inline ty GetValue(ty const& v) { return v; }
-
-inline void SetValue(char*& target, std::string const& str) {
-   CorbaValueTraits<char*>::SetValue(target, str);
-   }
-
-inline std::string GetValue(char const* sz) {
-   return CorbaValueTraits<char*>::GetValue(sz);
-   }
-
-template<CorbaOptionalStruct Opt>
-inline void ResetOptionalValue(Opt& opt) { CorbaOptionalTraits<Opt>::Reset(opt); }
-
-template<CorbaValueStruct Val>
-inline void ResetValue(Val& val) { CorbaValueTraits<Val>::Reset(val); }
-
-template<typename ty>
-   requires CorbaBuiltin<ty>
-inline void ResetValue(ty& v) { v = ty{}; }
-
-inline void ResetValue(char*& sz) { CorbaValueTraits<char*>::Reset(sz); }
-
-
-
-// Umwandlung zu std::optional
-
-template<CorbaOptionalStruct Opt>
-inline auto ToStdOptional(Opt const& opt) {
-   using value_type = typename CorbaOptionalTraits<Opt>::value_type;
-   if (CorbaOptionalTraits<Opt>::HasValue(opt))
-      return std::optional<value_type>(CorbaOptionalTraits<Opt>::GetValue(opt));
-   return std::optional<value_type>();
-}
-
-template<typename StdOpt, CorbaOptionalStruct CorbaOpt>
-CorbaOpt FromStdOptional(StdOpt const& opt) requires requires { opt.has_value(); } {
-   CorbaOpt result{};
-   if (opt.has_value())
-      CorbaOptionalTraits<CorbaOpt>::SetValue(result, *opt);
-   else
-      CorbaOptionalTraits<CorbaOpt>::Reset(result);
-   return result;
-}
