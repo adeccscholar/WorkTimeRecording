@@ -73,6 +73,7 @@
 #include <Tools.h>
 #include "Corba_Nameservice.h"
 
+#include <tao/ORB.h>
 #include "tao/Object.h"
 #include <tao/PortableServer/Servant_Base.h>
 #include <tao/PortableServer/PortableServer.h>
@@ -188,9 +189,12 @@ private:
    std::string                  strName         = ""s;     ///< Logical name of the ORB instance (used for logs, identification)
    CORBA::ORB_var               orb_            = nullptr; ///< CORBA ORB instance handle
    CosNaming::NamingContext_var naming_context_ = nullptr; //< Root naming context resolved from ORB
+//protected:
+//   ORBBase() { }  // later with full parameters
+ 
 public:
    /// \brief Deleted default constructor (ORBBase must be explicitly constructed)
-   ORBBase() = delete;
+   //ORBBase() = delete;
 
    /**
     \brief Constructor initializes ORB and resolves NamingContext.
@@ -295,6 +299,23 @@ public:
     \return Const pointer to the internal CORBA ORB.
    */
    virtual CORBA::ORB* orb() const { return orb_.in(); }
+
+   /**
+    \brief Requests shutdown of the ORB loop.
+    \details This triggers the shutdown of the CORBA ORB, which causes orb()->run() to return.
+    \note Safe to call multiple times; redundant calls are ignored by the ORB.
+   */
+   virtual void stop_orb(bool wait_for_completion = true) {
+      if (!CORBA::is_nil(orb_.in())) {
+         try {
+            orb_->shutdown(wait_for_completion);
+            log_trace<9>("[{} {}] ORB shutdown requested (wait_for_completion = {}).", strName, ::getTimeStamp(), wait_for_completion);
+         }
+         catch (CORBA::Exception const& ex) {
+            log_error("[{} {}] Exception during ORB shutdown: {}", strName, ::getTimeStamp(), toString(ex));
+         }
+      }
+   }
 
    /**
     \brief Accessor for the resolved NamingContext.
@@ -422,6 +443,14 @@ public:
    virtual ~CORBAServer() {
       shutdown_all();
       log_trace<9>("[{} {}] CORBAServer deleted.", Text(), ::getTimeStamp());
+      }
+
+   bool IsActive() const {
+      return orb_thread_.joinable() ? true : false;
+      }
+
+   void Wait() {
+      if (IsActive()) orb_thread_.join();
       }
 
    /**

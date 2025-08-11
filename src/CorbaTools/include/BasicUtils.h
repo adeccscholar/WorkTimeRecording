@@ -1,11 +1,8 @@
 ﻿#pragma once
 
-#include <type_traits>
+
 #include <utility>
-#include <string>
-#include <optional>
-#include <chrono>
-#include <string_view>
+#include <convert.h>
 #include <BasicsC.h>
 
 // ============================================================================
@@ -27,25 +24,6 @@ concept CorbaCharPointer = std::is_same_v<std::remove_cvref_t<ty>, char*>;
 template<typename ty>
 concept CorbaValueStruct = std::is_class_v<ty> && !CorbaOptionalStruct<ty> && !CorbaBuiltin<ty>;
 
-// =========================================================================
-// Hilfsmetaprogramm: Prüfung auf std::optional
-// =========================================================================
-
-template<typename T>
-struct is_std_optional : std::false_type {};
-
-template<typename T>
-struct is_std_optional<std::optional<T>> : std::true_type {};
-
-template<typename T>
-constexpr bool is_std_optional_v = is_std_optional<T>::value;
-
-// =========================================================================
-// Konvertierungs-Framework (zentralisiert) – NUR für direkte Typkonvertierungen
-// =========================================================================
-
-template<typename To, typename From, typename = void>
-struct Convert; // Primärtemplate – ungültig
 
 /// \brief Zentrale Konvertierungsfunktion
 /// \details Behandelt Optional-Werte (std::optional und CORBA Optionals) rekursiv und delegiert dann an Convert<To,From>
@@ -130,22 +108,10 @@ To convert(From const& from) {
    // Direkter Fall: atomare Konvertierung
    // ----------------------------------------------------------------------
    else {
-      return Convert<To, From>::apply(from);
+      return Converter<To, From>::apply(from);
    }
 }
 
-// =========================================================================
-// Konzept zur Prüfung auf gültige Konvertierung (NUR direkte Typen!)
-// =========================================================================
-
-template<typename From, typename To, typename = void>
-constexpr bool is_convertible_v = false;
-
-template<typename From, typename To>
-constexpr bool is_convertible_v<From, To, std::void_t<decltype(convert<To>(std::declval<From>()))>> = true;
-
-template<typename From, typename To>
-concept ConvertibleTo = is_convertible_v<From, To>;
 
 // =========================================================================
 // Beispielkonvertierungen für CORBA-Basistypen und C++-Typen
@@ -153,7 +119,7 @@ concept ConvertibleTo = is_convertible_v<From, To>;
 
 // CORBA::Long → int
 template<>
-struct Convert<int, CORBA::Long> {
+struct Converter<int, CORBA::Long> {
    static int apply(CORBA::Long from) { return static_cast<int>(from); }
 };
 
@@ -161,7 +127,7 @@ template<typename T>
    requires (!std::is_same_v<CORBA::Long, T>&&
 std::is_arithmetic_v<T>&&
 std::is_convertible_v<T, CORBA::Long>)
-struct Convert<CORBA::Long, T> {
+struct Converter<CORBA::Long, T> {
    static CORBA::Long apply(T from) {
       return static_cast<CORBA::Long>(from);
    }
@@ -169,7 +135,7 @@ struct Convert<CORBA::Long, T> {
 
 // CORBA::Double → double
 template<>
-struct Convert<double, CORBA::Double> {
+struct Converter<double, CORBA::Double> {
    static double apply(CORBA::Double from) { return static_cast<double>(from); }
 };
 
@@ -178,62 +144,38 @@ template<typename T>
    requires (std::is_arithmetic_v<T> &&
 !std::is_same_v<CORBA::Double, T>&&
 std::is_convertible_v<T, CORBA::Double>)
-struct Convert<CORBA::Double, T> {
+struct Converter<CORBA::Double, T> {
    static CORBA::Double apply(T from) {
       return static_cast<CORBA::Double>(from);
    }
 };
 
 
-// const char* → std::string (sicherheitshalber doppelt)
-template<>
-struct Convert<std::string, char const*> {
-   static std::string apply(char const* from) {
-      return from ? std::string(from) : std::string{};
-   }
-};
+
 
 template<>
-struct Convert<std::string, TAO::String_Manager> {
+struct Converter<std::string, TAO::String_Manager> {
    static std::string apply(TAO::String_Manager const& str) {
-      return Convert<std::string, char const*>::apply(str.in());
+      return Converter<std::string, char const*>::apply(str.in());
    }
 };
 
-// std::string_view → std::string
-template<>
-struct Convert<std::string, std::string_view> {
-   static std::string apply(std::string_view sv) {
-      return std::string(sv);
-   }
-};
 
 // std::string → CORBA::String (char*) – NICHT freigeben hier!
 template<>
-struct Convert<char*, std::string> {
+struct Converter<char*, std::string> {
    static char* apply(std::string const& str) {
       return CORBA::string_dup(str.c_str());
    }
 };
 
-// std::chrono::seconds → std::string (ISO-Zeit)
-template<>
-struct Convert<std::string, std::chrono::seconds> {
-   static std::string apply(std::chrono::seconds sec) {
-      std::time_t t = sec.count();
-      std::tm tm = *std::gmtime(&t);
-      char buf[32]{};
-      std::strftime(buf, sizeof(buf), "%FT%TZ", &tm);
-      return std::string(buf);
-   }
-};
 
 // =========================================================================
 // Konvertierung Basics::Date ↔ std::chrono::year_month_day
 // =========================================================================
 
 template<>
-struct Convert<std::chrono::year_month_day, Basics::Date> {
+struct Converter<std::chrono::year_month_day, Basics::Date> {
    static std::chrono::year_month_day apply(Basics::Date const& d) {
       return std::chrono::year{ d.year } /
          std::chrono::month{ static_cast<unsigned>(d.month) } /
@@ -242,7 +184,7 @@ struct Convert<std::chrono::year_month_day, Basics::Date> {
 };
 
 template<>
-struct Convert<Basics::Date, std::chrono::year_month_day> {
+struct Converter<Basics::Date, std::chrono::year_month_day> {
    static Basics::Date apply(std::chrono::year_month_day const& ymd) {
       Basics::Date result;
       result.year = int(ymd.year());
@@ -257,18 +199,30 @@ struct Convert<Basics::Date, std::chrono::year_month_day> {
 // =========================================================================
 
 template<>
-struct Convert<std::chrono::milliseconds, Basics::Time> {
+struct Converter<std::chrono::milliseconds, Basics::Time> {
    static std::chrono::milliseconds apply(Basics::Time const& t) {
       return std::chrono::milliseconds{ t.milliseconds };
    }
 };
 
 template<>
-struct Convert<Basics::Time, std::chrono::milliseconds> {
+struct Converter<Basics::Time, std::chrono::milliseconds> {
    static Basics::Time apply(std::chrono::milliseconds const& ms) {
       Basics::Time t;
       t.milliseconds = ms.count();
       return t;
+   }
+};
+
+/// \brief Konvertiert std::chrono::hh_mm_ss<Dur> nach Basics::Time als Millisekunden seit 00:00
+template <typename Rep, typename Period>
+struct Converter<Basics::Time, std::chrono::hh_mm_ss<std::chrono::duration<Rep, Period>>> {
+   static Basics::Time apply(std::chrono::hh_mm_ss<std::chrono::duration<Rep, Period>> const& t) {
+      using std::chrono::duration_cast;
+      using ms = std::chrono::milliseconds;
+      Basics::Time r{};
+      r.milliseconds = static_cast<long long>(duration_cast<ms>(t.to_duration()).count());
+      return r;
    }
 };
 
@@ -277,7 +231,7 @@ struct Convert<Basics::Time, std::chrono::milliseconds> {
 // =========================================================================
 
 template<>
-struct Convert<Basics::Time, std::chrono::hh_mm_ss<std::chrono::seconds>> {
+struct Converter<Basics::Time, std::chrono::hh_mm_ss<std::chrono::seconds>> {
    static Basics::Time apply(std::chrono::hh_mm_ss<std::chrono::seconds> const& from) {
       using namespace std::chrono;
       auto total = hours(from.hours()) + minutes(from.minutes()) + seconds(from.seconds());
@@ -286,7 +240,7 @@ struct Convert<Basics::Time, std::chrono::hh_mm_ss<std::chrono::seconds>> {
 };
 
 template<>
-struct Convert<std::chrono::hh_mm_ss<std::chrono::seconds>, Basics::Time> {
+struct Converter<std::chrono::hh_mm_ss<std::chrono::seconds>, Basics::Time> {
    static std::chrono::hh_mm_ss<std::chrono::seconds> apply(Basics::Time const& from) {
       using namespace std::chrono;
       seconds secs{ duration_cast<seconds>(milliseconds(from.milliseconds)).count() };
@@ -299,14 +253,14 @@ struct Convert<std::chrono::hh_mm_ss<std::chrono::seconds>, Basics::Time> {
 // =========================================================================
 
 template<>
-struct Convert<std::chrono::system_clock::time_point, Basics::TimePoint> {
+struct Converter<std::chrono::system_clock::time_point, Basics::TimePoint> {
    static std::chrono::system_clock::time_point apply(Basics::TimePoint const& tp) {
       return std::chrono::system_clock::time_point{ std::chrono::milliseconds{tp.milliseconds_since_epoch} };
    }
 };
 
 template<>
-struct Convert<Basics::TimePoint, std::chrono::system_clock::time_point> {
+struct Converter<Basics::TimePoint, std::chrono::system_clock::time_point> {
    static Basics::TimePoint apply(std::chrono::system_clock::time_point const& tp) {
       Basics::TimePoint result;
       result.milliseconds_since_epoch = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();

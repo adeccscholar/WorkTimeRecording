@@ -23,6 +23,17 @@ set(PROJECT_SOURCES WeatherServer.cpp EventScheduler.h WeatherProxy.h Utility.h
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES}) 
 
+if(MSVC)
+   target_compile_options(${PROJECT_NAME} PRIVATE /arch:AVX2)
+
+   set(manifest_file "${CMAKE_CURRENT_SOURCE_DIR}/wincompat.manifest")
+   target_sources(${PROJECT_NAME} PRIVATE ${manifest_file})
+   set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/MANIFEST:EMBED /MANIFESTINPUT:${manifest_file}"
+   )
+endif()
+
+
+
 add_dependencies(${PROJECT_NAME} WeatherAPI CorbaTools Weather_Skeletons)
 
 # configure_boost_for_target(${PROJECT_NAME} 1.87 "system;json")

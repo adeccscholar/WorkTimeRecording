@@ -7,6 +7,10 @@
 #include <Corba_Interfaces.h>
 #include <CorbaEvent.h>
 
+#include <Corba_EventServer.h>
+
+#include <SystemInfo.h>
+
 #include <boost/statechart/state_machine.hpp>
 #include <boost/statechart/state.hpp>
 #include <boost/statechart/event.hpp>
@@ -183,6 +187,7 @@ struct OffState : sc::state<OffState, FetchWeatherMachine> {
 
    sc::result react(EvTerminate const&) {
       std::println("[OffState] terminating system ...");
+      outermost_context().stop();
       outermost_context().terminate();
       return discard_event();
       }
@@ -227,7 +232,6 @@ struct StoppingState : public sc::state <StoppingState, FetchWeatherMachine> {
    sc::result react(EvShutdown const&) {
       FetchWeatherMachine& machine = context<FetchWeatherMachine>();
       std::println("[StoppingState] Shutdown received, stopping...");
-      machine.running = false;
       return transit<OffState>();
       }
    };
@@ -248,6 +252,7 @@ struct OnState : public sc::state<OnState, FetchWeatherMachine, OnIdleState> {
 
    sc::result react(EvTerminate const&) {
       std::println("[OnState] terminating system ...");
+      outermost_context().stop();
       outermost_context().terminate();
       return discard_event();
       }
@@ -332,12 +337,29 @@ void signal_handler(int sig_num) {
    std::println(std::cout, "[signal handler] signal {} received. Requesting shutdown ...", sig_num);
    if (exit_func) exit_func();
    shutdown_requested = true;
+   // std::println(std::cout, "[signal handler] Shutdown initiated");
    }
    
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
    SetConsoleOutputCP(CP_UTF8);
 #endif
+   ace_tools::SystemInformations SysInfos(argv[0]);
+   std::println("Systeminformations:");
+   std::println("Program:        {}", SysInfos.ProgramPath().filename().string());
+   std::println("Hostname:       {}", SysInfos.Hostname());
+   std::println("Domain:         {}", SysInfos.Domain());
+   std::println("IP Address:     {}", SysInfos.LocalAddress());
+
+   std::println("System Name:    {}", SysInfos.SystemName());
+   std::println("System Release: {}", SysInfos.SystemRelease());
+   std::println("System Version: {}", SysInfos.SystemVersion());
+
+   std::println("Node Name:      {}", SysInfos.NodeName());
+   std::println("Architecture:   {}", SysInfos.Architecture());
+   std::println("CPU Count:      {}", SysInfos.CpuCount());
+   std::println("PID:            {}", SysInfos.PID());
+
    WeatherProxy weather_data;
    TimedEvents::Scheduler  scheduler;
    FetchWeatherMachine machine(weather_data, scheduler);
@@ -346,21 +368,32 @@ int main(int argc, char* argv[]) {
    WeatherService_i* service = new WeatherService_i(weather_data);
    weather_corba.register_servant<0>("GlobalCorp/WeatherAPI", service);
 
-   exit_func = [&machine]() { machine.safe_process(EvShutdown{}); };
+   exit_func = [&machine]() { machine.safe_process(EvShutdown{}); 
+                              machine.safe_process(EvTerminate{});
+                            };
    signal(SIGINT, signal_handler);
    signal(SIGTERM, signal_handler);
 
    std::println(std::cout, "server to use the open-meteo.com Rest API");
- 
+   //std::println(std::cout, "A");
    machine.initiate();
-
+   //std::println(std::cout, "B");
    machine.run();
+   //std::println(std::cout, "C");
    weather_corba.run(shutdown_requested);
-
-   machine.scheduler_thread.join();
-   shutdown_requested = true;
+   //std::println(std::cout, "D");
+   
    exit_func = nullptr;
 
+   std::println("[Main] CORBA Server stopping ...");
+   weather_corba.shutdown_all();
+   //std::println(std::cout, "E");
+   weather_corba.stop_orb();
+   //std::println(std::cout, "F");
+   weather_corba.Wait();
+   //std::println(std::cout, "G");
+   if(machine.scheduler_thread.joinable()) machine.scheduler_thread.join();
+   
    std::println("[Main] Machine exited cleanly.");
    return 0;
-}
+   }

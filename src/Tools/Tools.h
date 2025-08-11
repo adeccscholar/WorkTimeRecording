@@ -99,7 +99,7 @@ inline std::string getTimeStamp(std::chrono::time_point<std::chrono::system_cloc
 
    auto const millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
    return std::format("{:%d.%m.%Y %X},{:03d}", cz_ts, millis.count());
-}
+   }
 
 /**
   \brief Converts an Basics::YearMonthDay to a std::chrono::year_month_day.

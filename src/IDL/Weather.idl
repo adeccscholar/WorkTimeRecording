@@ -1,6 +1,6 @@
 #include "Basics.idl"
 
-module WeatherAPI{
+module WeatherAPI {
 
    interface WeatherService {
       readonly attribute Basics::Optional_Time   sunrise;

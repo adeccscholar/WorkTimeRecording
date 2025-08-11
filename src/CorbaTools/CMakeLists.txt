@@ -12,7 +12,7 @@ add_dependencies(CorbaToolsHeader Basics_Stubs)
 # Nur öffentlicher Include-Pfad (mit ausgewählten Headern wie BasicTraits.h)
 target_include_directories(CorbaToolsHeader INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> )
 
-target_link_libraries(CorbaToolsHeader INTERFACE Basics_Stubs)
+target_link_libraries(CorbaToolsHeader INTERFACE ProjectTools Basics_Stubs)
 
 project(CorbaTools)
 

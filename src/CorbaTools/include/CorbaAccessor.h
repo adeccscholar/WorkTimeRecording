@@ -7,7 +7,7 @@
 // Convert-zentriertes Framework (Kernbaustein)
 // ============================================================================
 
-// Konzept zur Prüfung, ob eine Konvertierung mit convert<T,U> möglich ist
+// Konzept zur PrÃ¼fung, ob eine Konvertierung mit convert<T,U> mÃ¶glich ist
 /*
 template<typename From, typename To, typename = void>
 constexpr bool is_convertible_v = false;
@@ -43,7 +43,7 @@ template<typename CorbaTy, typename CppValue>
 concept ConvertibleToCorba = is_returnable_corba_v<CorbaTy, CppValue>;
 
 // ============================================================================
-// CorbaValueWrapper: einheitlicher Wrapper für C++ und CORBA Werte
+// CorbaValueWrapper: einheitlicher Wrapper fÃ¼r C++ und CORBA Werte
 // ============================================================================
 
 template<typename cpp_ty>
@@ -57,11 +57,12 @@ public:
    using value_type = typename storage_type::value_type;
 
    // -------------------------------------------------------------------------
-   // Konstruktor für C++ Typen via convert
+   // Konstruktor fÃ¼r C++ Typen via convert
    // -------------------------------------------------------------------------
    template<typename U>
-      requires ConvertibleTo<U, value_type>
-   explicit CorbaValueWrapper(U&& val) {
+      requires ConvertibleTo<U, value_type> && (!CorbaOptionalStruct<std::remove_cvref_t<U>> &&
+                  !CorbaValueStruct<std::remove_cvref_t<U>>)
+      explicit CorbaValueWrapper(U&& val) {
       if constexpr (is_std_optional_v<U>) {
          if (val.has_value())
             theValue = convert<value_type>(*val);
@@ -74,7 +75,7 @@ public:
    }
 
    // -------------------------------------------------------------------------
-   // Konstruktor für CORBA Optional-Typen (aus value_type ableitbar)
+   // Konstruktor fÃ¼r CORBA Optional-Typen (aus value_type ableitbar)
    // -------------------------------------------------------------------------
    template<CorbaOptionalStruct CorbaOpt>
    explicit CorbaValueWrapper(CorbaOpt const& corba) {
@@ -85,7 +86,7 @@ public:
    }
 
    // -------------------------------------------------------------------------
-   // Konstruktor für CORBA Value-Typen
+   // Konstruktor fÃ¼r CORBA Value-Typen
    // -------------------------------------------------------------------------
    template<CorbaValueStruct CorbaVal>
    explicit CorbaValueWrapper(CorbaVal const& corba)
@@ -114,10 +115,20 @@ public:
    }
 
    // -------------------------------------------------------------------------
-   // Rückgabe eines neuen CORBA Rückgabewerts
+   // RÃ¼ckgabe eines neuen CORBA RÃ¼ckgabewerts
    // -------------------------------------------------------------------------
+
+   template<typename, typename = void>
+   struct HasCorbaReturnTrait : std::false_type {};
+
+   template<typename ty>
+   struct HasCorbaReturnTrait<ty, std::void_t<typename CorbaAccessor<ty>::value_type>> : std::true_type {};
+
+   //template<typename ty>
+   //constexpr bool HasCorbaReturnTrait_v = HasCorbaReturnTrait<ty>::value;
+
    template<typename CorbaTy>
-      requires HasCorbaReturnTrait<CorbaTy>&& ConvertibleToCorba<CorbaTy, value_type>
+      requires HasCorbaReturnTrait<CorbaTy>::value && ConvertibleToCorba<CorbaTy, value_type>
    CorbaTy Return() const {
       CorbaTy result{};
       if constexpr (CorbaOptionalStruct<CorbaTy>) {
@@ -125,15 +136,15 @@ public:
             CorbaOptionalTraits<CorbaTy>::SetValue(result, value());
          else
             CorbaOptionalTraits<CorbaTy>::Reset(result);
-      }
+         }
       else {
          CorbaValueTraits<CorbaTy>::SetValue(result, value());
-      }
+         }
       return result;
-   }
+      }
 
    // -------------------------------------------------------------------------
-   // Optional: Manuelles Zurücksetzen
+   // Optional: Manuelles ZurÃ¼cksetzen
    // -------------------------------------------------------------------------
    void Reset() {
       theValue.reset();
